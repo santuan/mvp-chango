@@ -1,4 +1,5 @@
 import { ref } from 'vue'
+import { useToast } from '@nuxt/ui/composables'
 import { useCart } from './useCart'
 import type { CartProduct } from './useCart'
 
@@ -6,6 +7,8 @@ const scanModalOpen = ref(false)
 const addModalOpen = ref(false)
 const removeModalOpen = ref(false)
 const checkoutModalOpen = ref(false)
+const assistanceModalOpen = ref(false)
+const assistanceCalling = ref(false)
 const selectedProduct = ref<CartProduct | null>(null)
 const modalQty = ref(1)
 const scanMode = ref<'add' | 'remove'>('add')
@@ -39,6 +42,7 @@ const scanRemoveIndex = ref(0)
 
 export function useCartModals() {
   const { products } = useCart()
+  const toast = useToast()
 
   function openScan(mode: 'add' | 'remove'): void {
     scanMode.value = mode
@@ -74,6 +78,12 @@ export function useCartModals() {
       products.value.unshift({ ...selectedProduct.value, quantity: modalQty.value })
     addModalOpen.value = false
     justAddedId.value = selectedProduct.value.id
+    toast.add({
+      title: 'Producto agregado al carrito',
+      description: `${selectedProduct.value.name} · x${modalQty.value}`,
+      color: 'success',
+      icon: 'i-lucide-shopping-cart'
+    })
     setTimeout(() => { justAddedId.value = null }, 1500)
   }
 
@@ -86,8 +96,15 @@ export function useCartModals() {
   function confirmRemove(): void {
     if (!selectedProduct.value)
       return
+    const removedName = selectedProduct.value.name
     products.value = products.value.filter(p => p.id !== selectedProduct.value?.id)
     removeModalOpen.value = false
+    toast.add({
+      title: 'Producto eliminado del carrito',
+      description: removedName,
+      color: 'error',
+      icon: 'i-lucide-trash-2'
+    })
   }
 
   function increaseQty(): void {
@@ -99,11 +116,26 @@ export function useCartModals() {
       modalQty.value -= 1
   }
 
+  function openAssistance(): void {
+    assistanceCalling.value = false
+    assistanceModalOpen.value = true
+  }
+
+  function callAssistance(): void {
+    assistanceCalling.value = true
+  }
+
+  function cancelAssistance(): void {
+    assistanceModalOpen.value = false
+  }
+
   return {
     scanModalOpen,
     addModalOpen,
     removeModalOpen,
     checkoutModalOpen,
+    assistanceModalOpen,
+    assistanceCalling,
     selectedProduct,
     modalQty,
     scanMode,
@@ -114,6 +146,9 @@ export function useCartModals() {
     openRemove,
     confirmRemove,
     increaseQty,
-    decreaseQty
+    decreaseQty,
+    openAssistance,
+    callAssistance,
+    cancelAssistance
   }
 }

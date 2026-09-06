@@ -6,6 +6,8 @@ const {
   addModalOpen,
   removeModalOpen,
   checkoutModalOpen,
+  assistanceModalOpen,
+  assistanceCalling,
   selectedProduct,
   modalQty,
   scanMode,
@@ -14,14 +16,17 @@ const {
   confirmAdd,
   confirmRemove,
   increaseQty,
-  decreaseQty
+  decreaseQty,
+  openAssistance,
+  callAssistance,
+  cancelAssistance
 } = useCartModals()
 
 function formatPrice(value: number): string {
   return `$${value.toLocaleString('es-AR')}`
 }
 
-defineExpose({ openScan, checkoutModalOpen })
+defineExpose({ openScan, checkoutModalOpen, assistanceModalOpen, openAssistance })
 </script>
 
 <template>
@@ -128,13 +133,20 @@ defineExpose({ openScan, checkoutModalOpen })
         </div>
         <div class="flex flex-col gap-3 md:flex-row md:justify-between">
           <UButton
-            class="bg-black px-10 font-bold text-white"
+            variant="outline"
+            color="neutral"
+            size="xl"
+            class="h-18 px-6 rounded-2xl font-bold"
             label="Cancelar"
             @click="addModalOpen = false"
           />
           <UButton
-            class="bg-black px-10 font-bold text-white"
             label="Agregar al carrito"
+            variant="outline"
+            color="neutral"
+            size="xl"
+
+            class="h-18 px-6 rounded-2xl font-bold"
             @click="confirmAdd"
           />
         </div>
@@ -182,7 +194,10 @@ defineExpose({ openScan, checkoutModalOpen })
             <h3 class="font-bold">
               Eliminando del carrito
             </h3>
-            <p v-if="selectedProduct" class="text-lg font-semibold">
+            <p
+              v-if="selectedProduct"
+              class="text-lg font-semibold"
+            >
               {{ selectedProduct.name }}
             </p>
           </div>
@@ -207,30 +222,101 @@ defineExpose({ openScan, checkoutModalOpen })
   <!-- Checkout modal -->
   <UModal
     v-model:open="checkoutModalOpen"
-    class="max-w-2xl"
+    class="max-w-2xl "
   >
     <template #content>
-      <div class="flex flex-col items-center gap-6 bg-white text-gray-900 p-10 text-center">
-        <h3 class="text-3xl font-bold">
+      <div class="flex flex-col items-center gap-6 bg-white h-96 justify-center text-gray-900 p-10 ">
+        <h3 class="text-3xl text-center font-bold">
           ¿Listo para pagar?
         </h3>
-        <div class="flex flex-col gap-2 text-sm font-semibold">
-          <p>1&nbsp;&nbsp;Diríjase a la zona de salida para pago sin fila.</p>
-          <p>2&nbsp;&nbsp;Haga click en la opción finalizar compra</p>
-        </div>
-        <div class="flex flex-col gap-3 md:flex-row">
+        <ol class=" gap-2 text-lg list-decimal font-semibold">
+          <li>Diríjase a la zona de salida para pago sin fila.</li>
+          <li>Haga click en la opción finalizar compra</li>
+        </ol>
+        <div class="flex flex-col gap-9 md:flex-row">
           <UButton
-            class="bg-black px-8 font-bold text-white"
+            variant="outline"
+            color="neutral"
+            size="xl"
+            class="h-18 rounded-2xl font-bold px-6"
             label="Continuar Comprando"
             @click="checkoutModalOpen = false"
           />
           <UButton
             to="/pagar"
-            class="bg-black px-8 font-bold text-white"
+            color="success"
+            size="xl"
+            class="h-18 rounded-2xl font-bold px-6"
             label="Finalizar compra"
             @click="checkoutModalOpen = false"
           />
         </div>
+      </div>
+    </template>
+  </UModal>
+
+  <!-- Assistance modal -->
+  <UModal
+    v-model:open="assistanceModalOpen"
+    class="max-w-2xl"
+  >
+    <template #content>
+      <div class="flex flex-col items-center gap-6 bg-white h-80 justify-center text-gray-900 p-10">
+        <template v-if="!assistanceCalling">
+          <div class="flex items-center gap-3">
+            <UIcon
+              name="i-lucide-circle-question-mark"
+              class="size-10 text-neutral-600"
+            />
+            <h3 class="text-3xl text-center font-bold">
+              Solicitar asistencia
+            </h3>
+          </div>
+          <p class="text-center text-neutral-600">
+            Un asistente te ayudará con tu compra
+          </p>
+          <div class="flex flex-col gap-4 md:flex-row">
+            <UButton
+              variant="outline"
+              color="neutral"
+              size="xl"
+              class="h-18 rounded-2xl font-bold px-6"
+              label="Cancelar"
+              @click="assistanceModalOpen = false"
+            />
+            <UButton
+              variant="outline"
+              color="primary"
+              size="xl"
+              class="h-18 rounded-2xl font-bold px-6"
+              label="Llamar asistente"
+              icon="i-lucide-phone"
+              @click="callAssistance"
+            />
+          </div>
+        </template>
+        <template v-else>
+          <div class="flex items-center gap-3">
+            <UIcon
+              name="i-lucide-user"
+              class="size-10 text-green-600"
+            />
+            <h3 class="text-3xl text-center font-bold">
+              Llamando...
+            </h3>
+          </div>
+          <p class="text-center text-neutral-600">
+            Un asistente se encuentra en camino.
+          </p>
+          <UButton
+            variant="outline"
+            color="neutral"
+            size="xl"
+            class="h-18 rounded-2xl font-bold px-6"
+            label="Cancelar llamada"
+            @click="cancelAssistance"
+          />
+        </template>
       </div>
     </template>
   </UModal>

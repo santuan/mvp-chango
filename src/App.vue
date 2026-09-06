@@ -2,6 +2,7 @@
   import { computed } from 'vue'
   import { useHead } from '@unhead/vue'
   import { useColorMode } from '@vueuse/core'
+  const toaster = { position: 'top-center' as const }
 
   const colorMode = useColorMode()
   const themeColor = computed(() => colorMode.value === 'dark' ? '#18181b' : '#ffffff')
@@ -15,7 +16,7 @@
 
 <template>
   <Suspense>
-    <UApp>
+    <UApp :toaster="toaster">
       <UMain>
         <RouterView />
       </UMain>

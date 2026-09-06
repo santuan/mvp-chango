@@ -1,39 +1,46 @@
 <script setup lang="ts">
-defineProps<{
-  subtotal: number
-  saving: number
-  totalItems: number
-  totalProducts: number
-  cartTotal: number
-  disableEliminar?: boolean
-  disableFinalizar?: boolean
-}>()
+import { useCartModals } from '../composables/useCartModals';
 
-defineEmits<{
-  eliminar: []
-  finalizar: []
-}>()
+  defineProps<{
+    subtotal: number
+    saving: number
+    totalItems: number
+    totalProducts: number
+    cartTotal: number
+    disableEliminar?: boolean
+    disableFinalizar?: boolean
+  }>()
 
-function formatPrice(value: number): string {
-  return `$${value.toLocaleString('es-AR')}`
-}
+  const { openScan } = useCartModals()
+
+
+  defineEmits<{
+    eliminar: []
+    finalizar: []
+  }>()
+
+  function formatPrice(value: number): string {
+    return `$${value.toLocaleString('es-AR')}`
+  }
 </script>
 
 <template>
-  <footer class="flex flex-col items-stretch gap-0 border-t border-neutral-200 bg-neutral-100 lg:flex-row">
-    <button
-      class="flex flex-col items-center w-64 justify-center gap-1 border-2 border-red-600 p-4 font-bold text-red-600 disabled:opacity-40"
-      :disabled="disableEliminar"
-      @click="$emit('eliminar')"
-    >
-      <UIcon
-        name="i-lucide-shopping-cart-minus"
-        class="size-8"
-      />
-      <span class="text-sm">Eliminar item</span>
-    </button>
-    <div class=" flex-1 flex-col items-center justify-center gap-4 p-4 grid grid-cols-4 sm:gap-10">
-      <div class="text-lg text-center">
+  <footer class="flex flex-col items-stretch min-h-32 gap-0 border-t border-neutral-200 bg-neutral-100 lg:flex-row">
+    <div class="border-l border-gray-700 shrink-0 flex justify-center items-center  p-3 w-64">
+      <button
+        class="flex  items-center w-64 justify-center rounded-2xl gap-3 bg-red-100  hover:bg-red-200 border-red-600 font-bold h-18 text-red-600 disabled:border-gray-400 disabled:text-gray-400 disabled:bg-gray-200"
+        :disabled="disableEliminar"
+        @click="$emit('eliminar')"
+      >
+        <UIcon
+          name="i-lucide-shopping-cart-minus"
+          class="size-8"
+        />
+        <span class="">Eliminar item</span>
+      </button>
+    </div>
+    <div class=" flex-1 flex-col items-center justify-center gap-4 grid grid-cols-3 sm:gap-6">
+      <div class="text-xl text-center">
         <p class=" text-neutral-600">
           Subtotal
         </p>
@@ -41,7 +48,7 @@ function formatPrice(value: number): string {
           {{ formatPrice(subtotal) }}
         </p>
       </div>
-      <div class="text-lg text-center">
+      <div class="text-xl text-center">
         <p class=" text-neutral-600">
           Ahorro
         </p>
@@ -49,7 +56,7 @@ function formatPrice(value: number): string {
           {{ formatPrice(saving) }}
         </p>
       </div>
-      <div class="text-lg text-center">
+      <div class="text-xl text-center">
         <p class=" text-neutral-600">
           Productos
         </p>
@@ -57,7 +64,7 @@ function formatPrice(value: number): string {
           {{ totalProducts }}
         </p>
       </div>
-      <!-- <div class="text-lg text-center">
+      <!-- <div class="text-xl text-center">
         <p class=" text-neutral-600">
           Items
         </p>
@@ -65,27 +72,36 @@ function formatPrice(value: number): string {
           {{ totalItems }}
         </p>
       </div> -->
-      <div>
-        <UButton
-          to="/"
-          label="Ver Carrito"
-          class="w-full h-24 text-2xl text-center justify-center bg-black text-white hover:bg-gray-700"
-        />
-      </div>
     </div>
-    <button
-      class="flex flex-col w-72 items-center justify-center gap-1 bg-green-600 p-6 text-white disabled:opacity-40"
-      :disabled="disableFinalizar"
-      @click="$emit('finalizar')"
-    >
-      <span class="flex items-center gap-2 text-2xl font-bold">
-        <UIcon
-          name="i-lucide-shopping-cart"
-          class="size-7"
-        />
-        {{ formatPrice(cartTotal) }}
-      </span>
-      <span>Finalizar compra</span>
-    </button>
+    <div class="flex justify-center items-center p-3">
+      <UButton
+        block
+        variant="outline"
+        color="neutral"
+        size="xl"
+        active-class="opacity-50!"
+        class="h-18 px-6 rounded-2xl font-bold"
+        label="Escanear producto"
+        icon="i-lucide-scan-line"
+        @click="openScan('add')"
+      />
+    </div> 
+    <div class="shrink-0 flex justify-center items-center p-3 w-72">
+      <button
+        class="flex flex-col w-full  items-center justify-center gap-1 rounded-2xl bg-green-600 hover:bg-green-500 h-full text-white disabled:opacity-40"
+        :disabled="disableFinalizar"
+        @click="$emit('finalizar')"
+      >
+        <span class="flex items-center gap-2 text-2xl font-bold">
+          Total
+          <!-- <UIcon
+            name="i-lucide-shopping-cart"
+            class="size-7"
+          /> -->
+          {{ formatPrice(cartTotal) }}
+        </span>
+        <span>Finalizar compra</span>
+      </button>
+    </div>
   </footer>
 </template>

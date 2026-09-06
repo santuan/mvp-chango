@@ -4,7 +4,7 @@
   import { useCartModals } from '../composables/useCartModals'
 
   const { products, subtotal, saving, cartTotal, totalItems, totalProducts } = useCart()
-  const { openScan, justAddedId, checkoutModalOpen } = useCartModals()
+  const { openScan, openRemove, justAddedId, checkoutModalOpen, openAssistance } = useCartModals()
 
   function formatPrice(value: number): string {
     return `$${value.toLocaleString('es-AR')}`
@@ -22,17 +22,21 @@
 </script>
 
 <template>
-  <div class="flex min-h-screen flex-col bg-white text-black">
-    <div class="flex flex-1 flex-col lg:flex-row">
+  <div class="flex h-screen flex-col bg-white text-black">
+    <div class="flex flex-1 flex-collg:flex-row">
       <!-- Product table -->
-      <section class="flex-1  p-6">
-        <div class="flex items-center gap-4 pb-4 mr-2 p-2" v-if="products.length !== 0">
+      <section class="flex-1 p-6">
+        <div
+          v-if="products.length !== 0"
+          class="flex items-center gap-4 pb-4 mr-2 p-2"
+        >
           <h1 class="flex-1 text-lg font-bold">
             Productos en el carrito
           </h1>
-          <span class="w-32 text-center text-xs font-semibold">Precio unidad</span>
-          <span class="w-44 text-center text-xs font-semibold">Cantidad</span>
-          <span class="w-32 text-center text-xs font-semibold">Total</span>
+          <span class="w-32 text-center text-sm font-semibold">Precio unidad</span>
+          <span class="w-44 text-center text-sm font-semibold">Cantidad</span>
+          <span class="w-32 text-center text-sm font-semibold">Total</span>
+          <span class="w-16" />
         </div>
 
         <div
@@ -40,7 +44,7 @@
           class="flex flex-col items-center gap-4 border-t border-neutral-200 py-32 text-center"
         >
           <UIcon
-            name="i-lucide-shopping-cart-plus"
+            name="i-lucide-shopping-cart"
             class="size-16 text-neutral-300"
           />
           <p class="text-xl font-bold">
@@ -50,9 +54,11 @@
             Escaneá un producto para comenzar
           </p>
           <UButton
-            size="xl"
-            class="bg-black px-10 py-4 font-bold text-white"
             label="Escanear producto"
+            variant="outline"
+            color="neutral"
+            size="xl"
+            class="h-18 rounded-2xl px-6 font-bold"
             icon="i-lucide-scan-line"
             @click="openScan('add')"
           />
@@ -89,7 +95,7 @@
                 variant="outline"
                 icon="i-lucide-minus"
                 aria-label="Quitar uno"
-                class="p-4 disabled:opacity-40"
+                class="p-4 disabled:opacity-50"
                 :disabled="product.quantity <= 1"
                 @click="decreaseRow(product)"
               />
@@ -108,6 +114,14 @@
               class="w-32 text-center text-sm font-semibold"
               :class="product.discountPercent ? 'text-green-600' : ''"
             >{{ formatPrice(lineTotal(product)) }}</span>
+            <UButton
+              color="error"
+              variant="outline"
+              icon="i-lucide-trash-2"
+              aria-label="Eliminar del carrito"
+              class="p-4"
+              @click="openRemove(product)"
+            />
           </div>
         </div>
       </section>
@@ -117,32 +131,57 @@
         <h2 class="text-lg font-bold tracking-wide">
           CHANGO
         </h2>
-        <UButton
+        <!-- <UButton
           block
+          variant="outline"
+          color="neutral"
           size="xl"
-          class="bg-black py-5 font-bold text-white"
+          active-class="opacity-50!"
+          class="h-18 rounded-2xl font-bold"
           label="Escanear producto"
+          icon="i-lucide-scan-line"
           @click="openScan('add')"
+        /> -->
+        <UButton
+          to="/"
+          block
+          variant="outline"
+          color="neutral"
+          size="xl"
+          active-class="opacity-50!"
+          class="h-18 rounded-2xl px-6 font-bold"
+          :icon="totalProducts === 0 ? 'i-lucide-shopping-cart' : 'i-lucide-shopping-cart-plus'"
+          label="Mi Carrito"
         />
         <UButton
           block
-          size="xl"
           to="/buscar"
-          class="bg-black py-5 font-bold text-white"
+          variant="outline"
+          color="neutral"
+          size="xl"
+          active-class="opacity-50!"
+          class="h-18 rounded-2xl font-bold"
+          icon="i-lucide-search"
           label="Busca producto"
         />
         <UButton
+          block
+          variant="outline"
+          color="neutral"
+          size="xl"
+          active-class="opacity-50!"
+          class="h-18 rounded-2xl font-bold"
+          icon="i-lucide-circle-question-mark"
+          label="Solicitar asistencia"
+          @click="openAssistance"
+        /> 
+        <!-- <UButton
           block
           size="xl"
           class="bg-gray-300 py-5 font-bold text-gray-500 pointer-events-none "
           label="Más opciones"
         />
-        <UButton
-          block
-          size="xl"
-          class="bg-gray-300 py-5 font-bold text-gray-500 pointer-events-none "
-          label="Solicitar asistencia"
-        />
+        -->
       </aside>
     </div>
 

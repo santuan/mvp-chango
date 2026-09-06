@@ -11,50 +11,131 @@ interface Category {
   name: string
 }
 
-// 4 pages x 9 per page mock
-const allCategories = ref<Category[]>(
-  Array.from({ length: 30 }, (_, i) => ({ id: i + 1, name: `Categoria ${i + 1}` }))
-)
+// 15 total, 12 per page mock
+const allCategories = ref<Category[]>([
+  { id: 1, name: 'Lácteos' },
+  { id: 2, name: 'Panadería' },
+  { id: 3, name: 'Huevos' },
+  { id: 4, name: 'Aceites y Vinagres' },
+  { id: 5, name: 'Arroz y Legumbres' },
+  { id: 6, name: 'Pastas' },
+  { id: 7, name: 'Azúcar y Endulzantes' },
+  { id: 8, name: 'Yerba y Café' },
+  { id: 9, name: 'Gaseosas' },
+  { id: 10, name: 'Aguas' },
+  { id: 11, name: 'Cervezas y Vinos' },
+  { id: 12, name: 'Limpieza' },
+  { id: 13, name: 'Higiene Personal' },
+  { id: 14, name: 'Carnes' },
+  { id: 15, name: 'Frutas y Verduras' },
+])
+
+interface Product {
+  id: number
+  name: string
+  categoryId: number
+  price: number
+  originalPrice: number
+  discount?: number
+}
+
+const allProducts = ref<Product[]>([
+  // Lácteos
+  { id: 1, name: 'Leche entera 1L', categoryId: 1, price: 1200, originalPrice: 1200 },
+  { id: 2, name: 'Leche descremada 1L', categoryId: 1, price: 1300, originalPrice: 1300 },
+  { id: 3, name: 'Manteca 200g', categoryId: 1, price: 2400, originalPrice: 2400 },
+  { id: 4, name: 'Queso cremoso 500g', categoryId: 1, price: 6800, originalPrice: 6800 },
+  { id: 5, name: 'YogurNatural x4', categoryId: 1, price: 3200, originalPrice: 3200 },
+  { id: 6, name: 'Queso rallado 250g', categoryId: 1, price: 4500, originalPrice: 4500 },
+  // Panadería
+  { id: 7, name: 'Pan lactal', categoryId: 2, price: 2800, originalPrice: 2800 },
+  { id: 8, name: 'Pan francés x12', categoryId: 2, price: 2400, originalPrice: 2400 },
+  { id: 9, name: 'Medialunas x6', categoryId: 2, price: 5200, originalPrice: 5200 },
+  { id: 10, name: 'Facturas x6', categoryId: 2, price: 5800, originalPrice: 5800 },
+  // Huevos
+  { id: 11, name: 'Huevos x12', categoryId: 3, price: 2800, originalPrice: 3500, discount: 20 },
+  { id: 12, name: 'Huevos x6', categoryId: 3, price: 1600, originalPrice: 1600 },
+  { id: 13, name: 'Huevos blancos x12', categoryId: 3, price: 3000, originalPrice: 3000 },
+  // Aceites y Vinagres
+  { id: 14, name: 'Aceite de oliva 500ml', categoryId: 4, price: 8500, originalPrice: 8500 },
+  { id: 15, name: 'Aceite de girasol 1L', categoryId: 4, price: 5200, originalPrice: 5200 },
+  { id: 16, name: 'Vinagre de manzana 500ml', categoryId: 4, price: 3800, originalPrice: 3800 },
+  { id: 17, name: 'Aceite de maíz 1L', categoryId: 4, price: 5600, originalPrice: 5600 },
+  // Arroz y Legumbres
+  { id: 18, name: 'Arroz 1kg', categoryId: 5, price: 1600, originalPrice: 1600 },
+  { id: 19, name: 'Frijoles 500g', categoryId: 5, price: 2200, originalPrice: 2200 },
+  { id: 20, name: 'Lentejas 500g', categoryId: 5, price: 2100, originalPrice: 2100 },
+  { id: 21, name: 'Garbanzos 500g', categoryId: 5, price: 3400, originalPrice: 3400 },
+  // Pastas
+  { id: 22, name: 'Fideos 500g', categoryId: 6, price: 1400, originalPrice: 1400 },
+  { id: 23, name: 'Spaghetti 500g', categoryId: 6, price: 1500, originalPrice: 1500 },
+  { id: 24, name: 'Ñoquis 500g', categoryId: 6, price: 2800, originalPrice: 2800 },
+  { id: 25, name: 'Ravioles 500g', categoryId: 6, price: 4200, originalPrice: 4200 },
+  // Azúcar y Endulzantes
+  { id: 26, name: 'Azúcar 1kg', categoryId: 7, price: 1800, originalPrice: 1800 },
+  { id: 27, name: 'Endulzante x100', categoryId: 7, price: 1200, originalPrice: 1200 },
+  { id: 28, name: 'Miel 500g', categoryId: 7, price: 12500, originalPrice: 12500 },
+  // Yerba y Café
+  { id: 29, name: 'Yerba mate 500g', categoryId: 8, price: 3360, originalPrice: 4200, discount: 20 },
+  { id: 30, name: 'Café molido 250g', categoryId: 8, price: 7500, originalPrice: 7500 },
+  { id: 31, name: 'Café instantáneo 100g', categoryId: 8, price: 8200, originalPrice: 8200 },
+  { id: 32, name: 'Té negro x24', categoryId: 8, price: 2100, originalPrice: 2100 },
+  // Gaseosas
+  { id: 33, name: 'Gaseosa 2.25L', categoryId: 9, price: 3200, originalPrice: 3200 },
+  { id: 34, name: 'Gaseosa 500ml', categoryId: 9, price: 1600, originalPrice: 1600 },
+  { id: 35, name: 'Jugo en polvo x10', categoryId: 9, price: 1800, originalPrice: 1800 },
+  { id: 36, name: 'Agua saborizada 500ml', categoryId: 9, price: 1400, originalPrice: 1400 },
+  // Aguas
+  { id: 37, name: 'Agua mineral 2L', categoryId: 10, price: 1100, originalPrice: 1100 },
+  { id: 38, name: 'Agua mineral 500ml', categoryId: 10, price: 800, originalPrice: 800 },
+  { id: 39, name: 'Agua saborizada 1L', categoryId: 10, price: 1900, originalPrice: 1900 },
+  // Cervezas y Vinos
+  { id: 40, name: 'Cerveza x6', categoryId: 11, price: 4640, originalPrice: 5800, discount: 20 },
+  { id: 41, name: 'Cerveza artesanal x3', categoryId: 11, price: 4200, originalPrice: 4200 },
+  { id: 42, name: 'Vino tinto 750ml', categoryId: 11, price: 6500, originalPrice: 6500 },
+  { id: 43, name: 'Vino blanco 750ml', categoryId: 11, price: 5800, originalPrice: 5800 },
+  // Limpieza
+  { id: 44, name: 'Detergente 1L', categoryId: 12, price: 3800, originalPrice: 3800 },
+  { id: 45, name: 'Lavandina 1L', categoryId: 12, price: 1200, originalPrice: 1200 },
+  { id: 46, name: 'Jabón en polvo 800g', categoryId: 12, price: 4200, originalPrice: 4200 },
+  { id: 47, name: 'Esponjas x3', categoryId: 12, price: 1500, originalPrice: 1500 },
+  // Higiene Personal
+  { id: 48, name: 'Jabón en barra', categoryId: 13, price: 900, originalPrice: 900 },
+  { id: 49, name: 'Shampoo 400ml', categoryId: 13, price: 5200, originalPrice: 5200 },
+  { id: 50, name: 'Pasta dental 90g', categoryId: 13, price: 3400, originalPrice: 3400 },
+  { id: 51, name: 'Papel higiene x4', categoryId: 13, price: 4500, originalPrice: 4500 },
+  // Carnes
+  { id: 52, name: 'Bondiola 1kg', categoryId: 14, price: 9600, originalPrice: 12000, discount: 20 },
+  { id: 53, name: 'Pechuga de pollo 1kg', categoryId: 14, price: 7200, originalPrice: 7200 },
+  { id: 54, name: 'Carne picada 1kg', categoryId: 14, price: 8400, originalPrice: 8400 },
+  { id: 55, name: 'Chorizo x6', categoryId: 14, price: 5600, originalPrice: 5600 },
+  // Frutas y Verduras
+  { id: 56, name: 'Banana 1kg', categoryId: 15, price: 1500, originalPrice: 1500 },
+  { id: 57, name: 'Manzana 1kg', categoryId: 15, price: 2200, originalPrice: 2200 },
+  { id: 58, name: 'Tomate 1kg', categoryId: 15, price: 1800, originalPrice: 1800 },
+  { id: 59, name: 'Cebolla 1kg', categoryId: 15, price: 1200, originalPrice: 1200 },
+  { id: 60, name: 'Papa 1kg', categoryId: 15, price: 1600, originalPrice: 1600 },
+])
 
 const searchQuery = ref('')
 const page = ref(1)
-const perPage = 9
-const view = ref<'categories' | 'product'>('categories')
+const perPage = 12
+const view = ref<'categories' | 'products' | 'product'>('categories')
 const selectedCategory = ref<Category | null>(null)
+const selectedProduct = ref<Product | null>(null)
 
-const categoryProducts: Record<number, { name: string, price: number, originalPrice: number, discount?: number }> = {
-  1: { name: 'Leche entera 1L', price: 1200, originalPrice: 1200 },
-  2: { name: 'Pan lactal', price: 2800, originalPrice: 2800 },
-  3: { name: 'Huevos x12', price: 2800, originalPrice: 3500, discount: 20 },
-  4: { name: 'Aceite de oliva 500ml', price: 8500, originalPrice: 8500 },
-  5: { name: 'Arroz 1kg', price: 1600, originalPrice: 1600 },
-  6: { name: 'Fideos 500g', price: 1400, originalPrice: 1400 },
-  7: { name: 'Azúcar 1kg', price: 1800, originalPrice: 1800 },
-  8: { name: 'Yerba mate 500g', price: 3360, originalPrice: 4200, discount: 20 },
-  9: { name: 'Café molido 250g', price: 7500, originalPrice: 7500 },
-  10: { name: 'Gaseosa 2.25L', price: 3200, originalPrice: 3200 },
-  11: { name: 'Agua mineral 2L', price: 1100, originalPrice: 1100 },
-  12: { name: 'Cerveza x6', price: 4640, originalPrice: 5800, discount: 20 },
-  13: { name: 'Jabón en barra', price: 900, originalPrice: 900 },
-  14: { name: 'Papel higiene x4', price: 4500, originalPrice: 4500 },
-  15: { name: 'Detergente 1L', price: 3800, originalPrice: 3800 },
-  16: { name: 'Shampoo 400ml', price: 5200, originalPrice: 5200 },
-  17: { name: 'Manteca 200g', price: 2400, originalPrice: 2400 },
-  18: { name: 'Queso cremoso 500g', price: 6800, originalPrice: 6800 },
-  19: { name: 'Bondiola 1kg', price: 9600, originalPrice: 12000, discount: 20 },
-  20: { name: 'Banana 1kg', price: 1500, originalPrice: 1500 }
-}
-
-const selectedProductData = computed(() => {
-  if (!selectedCategory.value) return null
-  return categoryProducts[selectedCategory.value.id] || null
+const productsInCategory = computed(() => {
+  if (!selectedCategory.value) return []
+  return allProducts.value.filter(p => p.categoryId === selectedCategory.value!.id)
 })
 
+const selectedProductData = computed(() => selectedProduct.value)
+
 const relatedProducts = computed(() => {
-  if (!selectedCategory.value) return []
-  const ids = [selectedCategory.value.id + 1, selectedCategory.value.id + 2, selectedCategory.value.id + 3]
-    .filter(id => id <= 20 && id !== selectedCategory.value?.id)
-  return ids.map(id => ({ id, name: categoryProducts[id]?.name || `Producto ${id}` }))
+  if (!selectedProduct.value) return []
+  return allProducts.value
+    .filter(p => p.categoryId === selectedProduct.value!.categoryId && p.id !== selectedProduct.value!.id)
+    .slice(0, 3)
 })
 
 const filtered = computed(() => {
@@ -87,11 +168,23 @@ function prevPage(): void {
 
 function openCategory(category: Category): void {
   selectedCategory.value = category
+  view.value = 'products'
+}
+
+function openProduct(product: Product): void {
+  selectedProduct.value = product
   view.value = 'product'
+}
+
+function backToProducts(): void {
+  view.value = 'products'
+  selectedProduct.value = null
 }
 
 function backToCategories(): void {
   view.value = 'categories'
+  selectedCategory.value = null
+  selectedProduct.value = null
 }
 </script>
 
@@ -114,29 +207,34 @@ function backToCategories(): void {
 
         <!-- Categories view -->
         <div v-if="view === 'categories'">
-                  <h1 class="flex-1 text-lg font-bold">
-          Buscar productos
-        </h1>
-          <div class="max-h-130 overflow-y-auto mt-6">
-            <div class="grid grid-cols-2 gap-4 md:grid-cols-3 min-h-100 place-content-start">
-              <button
+          <h1 class="flex-1 text-lg font-bold">
+            Buscar productos
+          </h1>
+          <div class="max-h-[calc(100vh-20rem)] min-h-[calc(100vh-20rem)] overflow-y-auto mt-6">
+            <div class="grid grid-cols-2 gap-2 md:grid-cols-4 place-content-start">
+              <UButton
                 v-for="category in paged"
                 :key="category.id"
-                class="flex flex-col items-center gap-2 bg-neutral-200 p-8"
+                variant="outline"
+                color="neutral"
+                size="xl"
+                block
+                active-class="opacity-50!"
+                class="h-32 px-6 rounded-2xl font-bold"
                 @click="openCategory(category)"
               >
-                <UIcon
+                <!-- <UIcon
                   name="i-lucide-shopping-bag"
-                  class="size-12 text-neutral-400"
-                />
-                <span class="text-sm">{{ category.name }}</span>
-              </button>
+                  class="size-6 "
+                /> -->
+                <span class="text-xl">{{ category.name }}</span>
+              </UButton>
             </div>
           </div>
 
           <div
             v-if="paged.length === 0"
-            class="flex flex-col items-center gap-2 py-10 text-neutral-500"
+            class="flex flex-col items-center gap-2 py-6 text-neutral-500"
           >
             <UIcon
               name="i-lucide-search-x"
@@ -145,43 +243,122 @@ function backToCategories(): void {
             <p>Sin resultados para "{{ searchQuery }}"</p>
           </div>
 
-          <div class="flex flex-col items-center justify-between pt-6 gap-4 sm:flex-row">
+          <div class="flex flex-col items-center justify-between mt-2 gap-4 sm:flex-row">
             <UButton
-              class="bg-black px-8 font-semibold text-white"
+              variant="outline"
+              color="neutral"
+              size="xl"
+              class="h-18 px-6 rounded-2xl font-bold disabled:opacity-40"
               label="Pagina anterior"
+              icon="i-lucide-arrow-left"
               :disabled="page <= 1"
               @click="prevPage"
             />
             <span class="text-sm">{{ page }} de {{ totalPages }}</span>
             <UButton
-              class="bg-black px-8 font-semibold text-white"
+              variant="outline"
+              color="neutral"
+              size="xl"
+              class="h-18 px-6 rounded-2xl font-bold disabled:opacity-40"
               label="Siguiente pagina"
+              trailing-icon="i-lucide-arrow-right"
               :disabled="page >= totalPages"
               @click="nextPage"
             />
           </div>
         </div>
 
+        <!-- Products list view -->
+        <div v-if="view === 'products'">
+          <div class="grid grid-cols-3">
+            <div>
+              <UButton
+                variant="outline"
+                color="neutral"
+                size="xl"
+                active-class="opacity-50!"
+                class="h-18 rounded-2xl px-6 mt-2 font-bold"
+                icon="i-lucide-arrow-left"
+                label="Volver a categorías"
+                @click="backToCategories"
+              />
+            </div>
+            <div class="flex justify-center items-center">
+              <h1 class="flex-1 text-center text-xl font-bold">
+                {{ selectedCategory?.name }}
+              </h1>
+            </div>
+          </div>
+          
+          <div class="max-h-[calc(100vh-20rem)] min-h-[calc(100vh-20rem)] overflow-y-auto mt-4">
+            <div class="grid grid-cols-2 gap-2 md:grid-cols-3 place-content-start">
+              <UButton
+                v-for="product in productsInCategory"
+                :key="product.id"
+                variant="outline"
+                color="neutral"
+                size="xl"
+                active-class="opacity-50!"
+                class="p-0 w-full rounded-2xl overflow-hidden font-bold"
+                @click="openProduct(product)"
+              >
+                <div class="flex gap-4 w-full">
+                  <div class="flex justify-center items-center shrink-0 h-40 bg-neutral-700 w-40">
+                    <UIcon
+                      name="i-lucide-shopping-bag"
+                      class="size-6 text-neutral-400"
+                    />
+                  </div>
+
+                  <div class="flex text-left w-full flex-col items-start justify-center ">
+                    <span class="text-lg">{{ product.name }}</span>
+                    <span
+                      class="text-xs font-bold"
+                      :class="product.discount ? 'text-green-600' : ''"
+                    >
+                      {{ formatPrice(product.price) }}
+                    </span> 
+                  </div>
+                </div>
+              </UButton>
+            </div>
+          </div>
+
+          <div
+            v-if="productsInCategory.length === 0"
+            class="flex flex-col items-center gap-2 py-6 text-neutral-500"
+          >
+            <UIcon
+              name="i-lucide-search-x"
+              class="size-10"
+            />
+            <p>No hay productos en esta categoría</p>
+          </div>
+        </div>
+
         <!-- Product detail view -->
-        <div v-else>
+        <div v-if="view === 'product'">
           <UButton
-            color="neutral"
             variant="outline"
+            color="neutral"
+            size="xl"
+            active-class="opacity-50!"
+            class="h-18 rounded-2xl px-6 font-bold"
             icon="i-lucide-arrow-left"
-            label="Volver a categorias"
-            @click="backToCategories"
+            :label="`Volver a ${selectedCategory?.name || 'productos'}`"
+            @click="backToProducts"
           />
-          <h1 class="pt-2 text-lg font-bold">
-            Productos en la canasta
-          </h1>
           <div class="flex flex-col gap-6 pt-4 md:flex-row">
-            <div class="flex h-64 w-full items-center justify-center bg-neutral-200 md:w-64">
+            <div class="flex h-72 w-full items-center justify-center bg-neutral-200 md:w-72">
               <UIcon
                 name="i-lucide-image"
                 class="size-10 text-neutral-400"
               />
             </div>
-            <div v-if="selectedProductData" class="flex flex-1 flex-col gap-2">
+            <div
+              v-if="selectedProductData"
+              class="flex flex-1 flex-col gap-2"
+            >
               <p
                 class="text-4xl font-bold"
                 :class="selectedProductData.discount ? 'text-green-600' : ''"
@@ -190,51 +367,86 @@ function backToCategories(): void {
               </p>
               <p
                 v-if="selectedProductData.discount"
-                class="text-lg font-semibold line-through"
+                class="text-lg font-semibold "
               >
-                {{ formatPrice(selectedProductData.originalPrice) }}
+                <span class="line-through">
+                  {{ formatPrice(selectedProductData.originalPrice) }}</span>
+                <span
+                  class="text-xl ml-3 font-semibold text-green-600"
+                >
+                  Aplica descuento {{ selectedProductData.discount }}%
+                </span>
               </p>
-              <p class="pt-2 text-sm font-bold">
+              <p class="pt-2 text-xl font-bold">
                 {{ selectedProductData.name }}
               </p>
-              <p
-                v-if="selectedProductData.discount"
-                class="text-sm font-semibold text-green-600"
-              >
-                Aplica descuento {{ selectedProductData.discount }}%
-              </p>
+              
               <p
                 v-if="selectedCategory"
-                class="text-xs text-neutral-500"
+                class="text-xl text-neutral-500"
               >
                 En {{ selectedCategory.name }}
               </p>
               <div>
                 <UButton
-                  class="mt-4 bg-black py-4 font-bold text-white"
                   label="Guiarme al producto en la gondola"
                   icon="i-lucide-navigation"
-                  :to="`/guiar?id=${selectedCategory?.id}`"
+                  variant="outline"
+                  color="neutral"
+                  size="xl"
+                  class="h-18 px-6 rounded-2xl font-bold"
+                  :to="`/guiar?id=${selectedProduct?.id}`"
                 />
               </div>
             </div>
           </div>
 
-          <h2 class="pt-8 text-lg font-bold">
+          <h2 class="pt-3 text-lg font-bold">
             Productos relacionados
           </h2>
-          <div class="grid grid-cols-2 gap-4 pt-4 md:grid-cols-3">
-            <div
+          <div class="grid grid-cols-2 gap-4 pt-3 md:grid-cols-3">
+            <UButton
               v-for="related in relatedProducts"
               :key="related.id"
-              class="flex flex-col items-center gap-2 bg-neutral-200 p-8"
+              variant="outline"
+              color="neutral"
+              size="xl"
+              active-class="opacity-50!"
+              class="p-0 w-full rounded-2xl overflow-hidden font-bold"
+              @click="openProduct(related)"
+            >
+              <div class="flex gap-4 w-full">
+                <div class="flex justify-center items-center shrink-0 h-32 bg-neutral-700 w-32">
+                  <UIcon
+                    name="i-lucide-shopping-bag"
+                    class="size-6 text-neutral-400"
+                  />
+                </div>
+
+                <div class="flex text-left w-full flex-col items-start justify-center ">
+                  <span class="text-lg">{{ related.name }}</span>
+                  <span
+                    class="text-xs font-bold"
+                    :class="related.discount ? 'text-green-600' : ''"
+                  >
+                    {{ formatPrice(related.price) }}
+                  </span> 
+                </div>
+              </div>
+            </UButton>
+            <!-- <button
+              v-for="related in relatedProducts"
+              :key="related.id"
+              type="button"
+              class="flex cursor-pointer flex-col items-center gap-2 bg-neutral-200 p-8 transition hover:bg-neutral-300"
+              @click="openProduct(related)"
             >
               <UIcon
                 name="i-lucide-shopping-bag"
                 class="size-14 text-neutral-400"
               />
               <span class="text-sm">{{ related.name }}</span>
-            </div>
+            </button> -->
           </div>
         </div>
       </section>
@@ -244,32 +456,49 @@ function backToCategories(): void {
         <h2 class="text-lg font-bold tracking-wide">
           CHANGO
         </h2>
-        <UButton
+        <!-- <UButton
           block
+          variant="outline"
+          color="neutral"
           size="xl"
-          class="bg-black py-5 font-bold text-white"
+          active-class="opacity-50!"
+          class="h-18 rounded-2xl font-bold"
           label="Escanear producto"
+          icon="i-lucide-scan-line"
           @click="openScan('add')"
+        /> -->
+        <UButton
+          to="/"
+          block
+          variant="outline"
+          color="neutral"
+          size="xl"
+          active-class="opacity-50!"
+          class="h-18 rounded-2xl px-6 font-bold"
+          :icon="totalProducts === 0 ? 'i-lucide-shopping-cart' : 'i-lucide-shopping-cart-plus'"
+          label="Mi Carrito"
         />
         <UButton
           block
-          size="xl"
           to="/buscar"
-          class="bg-primary py-5 font-bold text-white"
+          variant="outline"
+          color="neutral"
+          size="xl"
+          active-class="opacity-50!"
+          class="h-18 rounded-2xl font-bold"
+          icon="i-lucide-search"
           label="Busca producto"
         />
         <UButton
           block
+          variant="outline"
+          color="neutral"
           size="xl"
-          class="bg-gray-300 py-5 font-bold text-gray-500 pointer-events-none "
-          label="Más opciones"
-        />
-        <UButton
-          block
-          size="xl"
-          class="bg-gray-300 py-5 font-bold text-gray-500 pointer-events-none "
+          active-class="opacity-50!"
+          class="h-18 rounded-2xl font-bold"
+          icon="i-lucide-circle-question-mark"
           label="Solicitar asistencia"
-        />
+        /> 
       </aside>
     </div>
 

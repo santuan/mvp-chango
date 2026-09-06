@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import confetti from 'canvas-confetti'
 import { useCart } from '../composables/useCart'
 
 const { cartTotal, clearCart } = useCart()
@@ -11,6 +12,7 @@ type PayStep =
   | 'qr-single'
   | 'qr-split'
   | 'generating'
+  | 'verifying'
   | 'success'
   | 'error'
   | 'rating'
@@ -32,7 +34,7 @@ function splitAmount(count: 2 | 3 | 4): number {
 }
 
 const currentAmount = computed(() => {
-  if ((step.value === 'qr-split' || step.value === 'generating' || step.value === 'error') && splitCount.value)
+  if ((step.value === 'qr-split' || step.value === 'generating' || step.value === 'verifying' || step.value === 'error') && splitCount.value)
     return splitAmount(splitCount.value)
   return cartTotal.value
 })
@@ -88,7 +90,10 @@ function simulateQrPaid(): void {
 
 function simulateQrError(single: boolean): void {
   errorTitle.value = single ? 'No se registro el pago' : `QR ${currentQr.value} NO SE REGISTRO`
-  step.value = 'error'
+  step.value = 'verifying'
+  window.setTimeout(() => {
+    step.value = 'error'
+  }, 1400)
 }
 
 function retryQr(): void {
@@ -102,6 +107,16 @@ function backToTotal(): void {
 
 function backToModality(): void {
   step.value = 'modality'
+}
+
+function selectRating(n: number): void {
+  rating.value = n
+  confetti({
+    particleCount: n >= 4 ? 150 : 80,
+    spread: n >= 4 ? 100 : 70,
+    origin: { y: 0.6 },
+    disableForReducedMotion: true,
+  })
 }
 </script>
 
@@ -125,17 +140,22 @@ function backToModality(): void {
       >
         El carrito está vacío, escaneá un producto para continuar
       </p>
-      <h1 class="pt-8 text-3xl font-bold">
-        Selecciona una opción
-      </h1>
+     
       <div class="flex flex-col gap-4 pt-4 sm:flex-row">
         <UButton
           to="/"
-          class="bg-black px-12 py-3 font-semibold text-white"
+          variant="outline"
+          color="neutral"
+          size="xl"
+          block
+          class="h-18 px-6 rounded-2xl font-bold w-64"
           label="Volver atras"
         />
         <UButton
-          class="bg-black px-12 py-3 font-semibold text-white"
+          color="success"
+          size="xl"
+          block
+          class="h-18 px-6 rounded-2xl font-bold w-64"
           label="Pagar"
           :disabled="cartTotal === 0"
           @click="goModality"
@@ -152,23 +172,35 @@ function backToModality(): void {
         Seleccionar modalidad de pago
       </h1>
       <div class="flex flex-col gap-4 md:flex-row">
-        <button
-          class="flex flex-1 items-center justify-center bg-black p-16 font-semibold text-white"
+        <UButton
+          variant="outline"
+          color="neutral"
+          size="xl"
+          block
+          class=" px-6 text-2xl flex-col flex flex-1 items-center justify-center  h-64 rounded-2xl font-bold w-64"
           @click="goSingleQr"
         >
           Pago con QR
-        </button>
-        <button
-          class="flex flex-1 flex-col items-center justify-center bg-black p-16 font-semibold text-white"
+        </UButton>
+        <UButton
+          variant="outline"
+          color="neutral"
+          size="xl"
+          block
+          class=" px-6 flex-col flex flex-1 items-center justify-center  h-64 rounded-2xl font-bold w-64"
           @click="goSplitSelect"
         >
-          <span>Pago dividido</span>
-          <span>Max. 4 personas</span>
-        </button>
+          <span class="text-2xl">Pago dividido con QR</span>
+          <span>Máximo 4 personas</span>
+        </UButton>
       </div>
       <div>
         <UButton
-          class="bg-black px-12 py-3 font-semibold text-white"
+          variant="outline"
+          color="neutral"
+          size="xl"
+          block
+          class="h-18 w-64 px-6 rounded-2xl font-bold"
           label="Volver atras"
           @click="backToTotal"
         />
@@ -178,32 +210,47 @@ function backToModality(): void {
     <!-- Split select -->
     <section
       v-if="step === 'split'"
-      class="flex w-full max-w-5xl flex-1 flex-col justify-center gap-8"
+      class="flex w-full max-w-5xl flex-1 flex-col justify-center gap-2"
     >
-      <h1 class="text-center text-3xl font-bold">
-        Pago dividido.<br>Seleccione cantidad a dividir. Máximo 4 personas.
+      <h1 class="text-center text-lg font-bold">
+        Pago dividido. Máximo 4 personas.
       </h1>
+      <h2 class="text-center text-3xl max-w-2xl my-6 mx-auto font-bold">
+        Seleccione en cuando quiere dividir el pago y haga click en generar QR.
+      </h2>
       <div class="flex flex-col gap-4 md:flex-row">
-        <button
+        <UButton
           v-for="n in ([2, 3, 4] as const)"
           :key="n"
-          class="flex flex-1 flex-col items-center gap-4 bg-black p-10 text-white"
-          :class="splitCount === n ? 'outline-4 bg-green-600 outline-green-600' : ''"
+          variant="outline"
+          color="neutral"
+          size="xl"
+          block
+          class=" px-6 flex-col flex flex-1 items-center justify-center  h-64 rounded-2xl font-bold w-64"
+          :class="splitCount === n ? ' bg-green-500! text-green-900 ' : ''"
           @click="splitCount = n"
         >
           <span class="text-6xl">{{ n }}</span>
           <span>{{ formatPrice(splitAmount(n)) }}</span>
-        </button>
+        </UButton>
       </div>
-      <div class="flex flex-col gap-4 sm:flex-row sm:justify-between">
+      <div class="flex flex-col gap-4 mt-6 sm:flex-row sm:justify-between">
         <UButton
-          class="bg-black px-12 py-3 font-semibold text-white"
+          variant="outline"
+          color="neutral"
+          size="xl"
+          block
+          class="h-18 w-64 px-6 rounded-2xl font-bold"
           label="Volver atras"
           @click="backToModality"
         />
         <UButton
-          class="bg-black px-12 py-3 font-semibold text-white"
-          label="Siguiente"
+          :variant="splitCount ? 'solid' : 'solid'"
+          :color="splitCount ? 'success' : 'neutral'"
+          size="xl"
+          block
+          class="h-18 w-64 px-6 rounded-2xl font-bold"
+          label="Generar QRs"
           :disabled="!splitCount"
           @click="startSplit"
         />
@@ -232,36 +279,46 @@ function backToModality(): void {
           :class="i < currentQr || (i === currentQr && paidCount >= i) ? 'bg-green-600' : i === currentQr ? 'bg-black' : 'bg-neutral-400'"
         />
       </div>
-      <div class="flex h-64 w-64 items-center justify-center bg-neutral-100">
+      <div class="flex flex-col h-80 w-80 items-center justify-center bg-neutral-100">
         <UIcon
           name="i-lucide-qr-code"
-          class="size-24 text-neutral-500"
+          class="size-44 text-neutral-500"
         />
+        <div class="grid grid-cols-2 gap-1">
+          <UButton
+            color="success"
+            label="Simular pago"
+            block
+            @click="simulateQrPaid"
+          />
+          <UButton
+            color="error"
+            label="Simular error"
+            block
+            @click="simulateQrError(step === 'qr-single')"
+          />
+        </div>
       </div>
       <p class="text-sm text-neutral-600">
         Mock: acercá el lector o simulá el resultado
       </p>
-      <div class="flex flex-col gap-3 sm:flex-row">
-        <UButton
-          class="bg-black px-8 font-semibold text-white"
-          label="Simular pago"
-          icon="i-lucide-check"
-          @click="simulateQrPaid"
-        />
-        <UButton
-          color="neutral"
-          variant="outline"
-          label="Simular error"
-          icon="i-lucide-x"
-          @click="simulateQrError(step === 'qr-single')"
-        />
-      </div>
       <UButton
+        variant="outline"
+        color="neutral"
+        size="xl"
+        block
+        class="h-18 w-64 px-6 rounded-2xl font-bold"
+        label="Cancelar"
+        @click="backToModality"
+      />
+      
+
+      <!-- <UButton
         color="neutral"
         variant="ghost"
         label="Volver atras"
         @click="step === 'qr-single' ? backToModality() : goSplitSelect()"
-      />
+      /> -->
     </section>
 
     <!-- Generating / paid -->
@@ -294,6 +351,20 @@ function backToModality(): void {
       </p>
     </section>
 
+    <!-- Verifying / processing payment -->
+    <section
+      v-if="step === 'verifying'"
+      class="flex w-full max-w-2xl flex-1 flex-col items-center justify-center gap-4 text-center"
+    >
+      <UIcon
+        name="i-lucide-loader-2"
+        class="size-24 animate-spin text-neutral-500"
+      />
+      <h1 class="text-2xl font-bold">
+        Procesando pago...
+      </h1>
+    </section>
+
     <!-- Success -->
     <section
       v-if="step === 'success'"
@@ -321,7 +392,7 @@ function backToModality(): void {
       class="flex w-full max-w-2xl flex-1 flex-col items-center justify-center gap-6 text-center"
     >
       <UIcon
-        name="i-lucide-x-circle"
+        name="i-lucide-triangle-alert"
         class="size-24 text-red-600"
       />
       <h1 class="text-2xl font-bold">
@@ -329,15 +400,22 @@ function backToModality(): void {
       </h1>
       <div class="flex flex-col gap-3 sm:flex-row">
         <UButton
-          class="bg-black px-10 font-semibold text-white"
-          label="Volver a intentar"
-          @click="retryQr"
+          variant="outline"
+          color="neutral"
+          size="xl"
+          block
+          class="h-18 px-6 rounded-2xl font-bold w-64"
+          label="Cancelar"
+          @click="backToModality"
         />
         <UButton
-          color="neutral"
           variant="outline"
-          label="Volver atras"
-          @click="backToModality"
+          color="neutral"
+          size="xl"
+          block
+          class="h-18 px-6 rounded-2xl font-bold w-64"
+          label="Generar nuevo QR"
+          @click="retryQr"
         />
       </div>
     </section>
@@ -362,9 +440,9 @@ function backToModality(): void {
           v-for="n in 5"
           :key="n"
           class="size-12 text-center p-0 justify-center font-bold"
-          color="neutral"
+          :color="rating === n ?'success' : 'neutral'"
           :label="String(n)"
-          @click="rating = n"
+          @click="selectRating(n)"
         />
       </div>
       <UButton
