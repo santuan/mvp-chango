@@ -4,7 +4,7 @@ import { useCart } from '../composables/useCart'
 import { useCartModals } from '../composables/useCartModals'
 
 const { subtotal, saving, cartTotal, totalItems, totalProducts } = useCart()
-const { openScan, checkoutModalOpen } = useCartModals()
+const { openScan, checkoutModalOpen, openAssistance } = useCartModals()
 
 interface Category {
   id: number
@@ -498,6 +498,7 @@ function backToCategories(): void {
           class="h-18 rounded-2xl font-bold"
           icon="i-lucide-circle-question-mark"
           label="Solicitar asistencia"
+          @click="openAssistance"
         /> 
       </aside>
     </div>
