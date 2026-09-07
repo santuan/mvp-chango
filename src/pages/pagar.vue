@@ -299,9 +299,9 @@ function selectRating(n: number): void {
           />
         </div>
       </div>
-      <p class="text-sm text-neutral-600">
+      <!-- <p class="text-sm text-neutral-600">
         Mock: acercá el lector o simulá el resultado
-      </p>
+      </p> -->
       <UButton
         variant="outline"
         color="neutral"

@@ -116,7 +116,7 @@ const target = computed(() => {
   return allProducts.find(p => p.id === id) ?? allProducts[0]
 })
 
-const meters = ref(9)
+const meters = ref(5)
 const finished = ref(false)
 const arrived = ref(false)
 const confirming = ref(false)
@@ -139,7 +139,7 @@ function formatPrice(value: number): string {
   return `$${value.toLocaleString('es-AR')}`
 }
 
-// Countdown from 9 to 1 while the user walks; arrival ends it.
+// Countdown from 5 to 1 while the user walks; arrival ends it.
 let timer: number | undefined
 
 onMounted(() => {
@@ -178,7 +178,8 @@ function confirmAdd(): void {
     title: 'Producto agregado al carrito',
     description: `${target.value.name} · x${quantity.value}`,
     color: 'success',
-    icon: 'i-lucide-shopping-cart'
+    icon: 'i-lucide-shopping-cart',
+    duration: 1500
   })
   finished.value = true
 }

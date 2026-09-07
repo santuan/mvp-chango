@@ -124,6 +124,53 @@ const view = ref<'categories' | 'products' | 'product'>('categories')
 const selectedCategory = ref<Category | null>(null)
 const selectedProduct = ref<Product | null>(null)
 
+// Search mode: as soon as the user types, category grid hides and
+// the CommandPalette (Fuse.js + Listbox) shows live product results.
+const isSearching = computed(() => searchQuery.value.trim().length > 0)
+
+function categoryName(id: number): string {
+  return allCategories.value.find(c => c.id === id)?.name ?? ''
+}
+
+// CommandPalette group: every product as a fuzzy-searchable item.
+// UCommandPalette filters these with Fuse.js (via @vueuse useFuse)
+// and renders them in an accessible Listbox.
+const paletteGroups = computed(() => [
+  {
+    id: 'products',
+    label: 'Productos',
+    items: allProducts.value.map(p => ({
+      productId: p.id,
+      label: p.name,
+      category: categoryName(p.categoryId),
+      description: `En ${categoryName(p.categoryId)}`,
+      suffix: formatPrice(p.price),
+      icon: 'i-lucide-shopping-bag',
+    })),
+  },
+])
+
+const paletteFuse = {
+  fuseOptions: {
+    keys: ['label', 'category', 'description'],
+    threshold: 0.35,
+    ignoreLocation: true,
+  },
+  resultLimit: 30,
+  matchAllWhenSearchEmpty: false,
+}
+
+function onSelectPaletteItem(value: { productId?: number; [key: string]: unknown } | null | undefined): void {
+  const id = value?.productId as number | undefined
+  if (!id)
+    return
+  const product = allProducts.value.find(p => p.id === id)
+  if (!product)
+    return
+  selectedCategory.value = allCategories.value.find(c => c.id === product.categoryId) ?? null
+  openProduct(product)
+}
+
 const productsInCategory = computed(() => {
   if (!selectedCategory.value) return []
   return allProducts.value.filter(p => p.categoryId === selectedCategory.value!.id)
@@ -207,10 +254,83 @@ function backToCategories(): void {
 
         <!-- Categories view -->
         <div v-if="view === 'categories'">
-          <h1 class="flex-1 text-lg font-bold">
-            Buscar productos
-          </h1>
-          <div class="max-h-[calc(100vh-20rem)] min-h-[calc(100vh-20rem)] overflow-y-auto mt-6">
+          <div class="flex justify-start hover:bg-gray-200 w-full focus-within:border-green-600 border-4 h-10 items-center">
+            <div class="w-10 flex justify-center items-center">
+              <UIcon name="i-lucide-search" />
+            </div>
+            <input
+              v-model="searchQuery"
+              placeholder="Buscar en todos los productos..."
+              aria-label="Buscar en todos los productos"
+              class="w-full outline-0 "
+            >
+            <UButton
+              v-if="searchQuery"
+              type="button"
+              aria-label="Limpiar búsqueda"
+              title="Limpiar búsqueda"
+              class="shrink-0 mr-2"
+              variant="outline"
+              color="neutral"
+              @click="searchQuery = ''"
+            >
+              Limpiar búsqueda
+            </UButton>
+          </div>
+        
+          <UCommandPalette
+            v-if="isSearching"
+            v-model:search-term="searchQuery"
+            :groups="paletteGroups"
+            class="flex-1 max-h-[calc(100vh-15rem)] "
+            :fuse="paletteFuse"
+            :input="false"
+            @update:model-value="onSelectPaletteItem"
+             :ui="{
+    item: 'data-highlighted:not-data-disabled:before:bg-gray-300'
+  }"
+          >
+            <template #empty>
+              <div class="flex flex-col items-center gap-2 py-6 text-neutral-500">
+                <UIcon
+                  name="i-lucide-search-x"
+                  class="size-10"
+                />
+                <p>Sin resultados para "{{ searchQuery }}"</p>
+                <UButton
+                  type="button"
+                  aria-label="Limpiar búsqueda"
+                  title="Limpiar búsqueda"
+                  variant="outline"
+                  size="xl"
+                  class="h-18 rounded-2xl font-bold px-6"
+                  color="neutral"
+                  @click="searchQuery = ''"
+                >
+                  Limpiar búsqueda
+                </UButton>
+              </div>
+            </template>
+            <template #item="{ item }">
+              <div class="flex w-full items-center gap-4 h-24 py-1">
+                <div class="flex h-24 w-24 shrink-0 items-center justify-center rounded-xl bg-neutral-700">
+                  <UIcon
+                    name="i-lucide-shopping-bag"
+                    class="size-5 text-neutral-400"
+                  />
+                </div>
+                <div class="flex min-w-0 flex-1 flex-col text-neutral-900 items-start text-left">
+                  <span class="truncate text-base font-bold">{{ item.label }}</span>
+                  <span class="text-xs ">{{ item.description }}</span>
+                </div>
+                <span class="shrink-0 text-sm font-bold text-neutral-900">{{ item.suffix }}</span>
+              </div>
+            </template>
+          </UCommandPalette>
+          <div
+            v-if="!isSearching"
+            class="max-h-[calc(100vh-20rem)] min-h-[calc(100vh-20rem)] overflow-y-auto mt-6"
+          >
             <div class="grid grid-cols-2 gap-2 md:grid-cols-4 place-content-start">
               <UButton
                 v-for="category in paged"
@@ -233,7 +353,7 @@ function backToCategories(): void {
           </div>
 
           <div
-            v-if="paged.length === 0"
+            v-if="!isSearching && paged.length === 0"
             class="flex flex-col items-center gap-2 py-6 text-neutral-500"
           >
             <UIcon
@@ -243,7 +363,10 @@ function backToCategories(): void {
             <p>Sin resultados para "{{ searchQuery }}"</p>
           </div>
 
-          <div class="flex flex-col items-center justify-between mt-2 gap-4 sm:flex-row">
+          <div
+            v-if="!isSearching"
+            class="flex flex-col items-center justify-between mt-2 gap-4 sm:flex-row"
+          >
             <UButton
               variant="outline"
               color="neutral"
@@ -411,12 +534,10 @@ function backToCategories(): void {
               variant="outline"
               color="neutral"
               size="xl"
-              active-class="opacity-50!"
-              class="p-0 w-full rounded-2xl overflow-hidden font-bold"
               @click="openProduct(related)"
             >
               <div class="flex gap-4 w-full">
-                <div class="flex justify-center items-center shrink-0 h-32 bg-neutral-700 w-32">
+                <div class="flex justify-center items-center shrink-0 h-24 bg-neutral-700 w-24">
                   <UIcon
                     name="i-lucide-shopping-bag"
                     class="size-6 text-neutral-400"
@@ -489,7 +610,7 @@ function backToCategories(): void {
           icon="i-lucide-search"
           label="Busca producto"
         />
-        <UButton
+        <!-- <UButton
           block
           variant="outline"
           color="neutral"
@@ -499,7 +620,7 @@ function backToCategories(): void {
           icon="i-lucide-circle-question-mark"
           label="Solicitar asistencia"
           @click="openAssistance"
-        /> 
+        />  -->
       </aside>
     </div>
 

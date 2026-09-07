@@ -63,7 +63,7 @@
             @click="openScan('add')"
           />
         </div>
-        <div class="max-h-130 overflow-y-auto">
+        <div class="max-h-[calc(100vh-15rem)] overflow-y-auto">
           <div
             v-for="product in products"
             :key="product.id"
@@ -164,7 +164,7 @@
           icon="i-lucide-search"
           label="Busca producto"
         />
-        <UButton
+        <!-- <UButton
           block
           variant="outline"
           color="neutral"
@@ -174,7 +174,7 @@
           icon="i-lucide-circle-question-mark"
           label="Solicitar asistencia"
           @click="openAssistance"
-        /> 
+        />  -->
         <!-- <UButton
           block
           size="xl"
