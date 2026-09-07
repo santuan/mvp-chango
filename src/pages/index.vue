@@ -4,7 +4,7 @@
   import { useCartModals } from '../composables/useCartModals'
 
   const { products, subtotal, saving, cartTotal, totalItems, totalProducts } = useCart()
-  const { openScan, openRemove, justAddedId, checkoutModalOpen, openAssistance } = useCartModals()
+  const { openScan, openRemove, justAddedId, checkoutModalOpen } = useCartModals()
 
   function formatPrice(value: number): string {
     return `$${value.toLocaleString('es-AR')}`

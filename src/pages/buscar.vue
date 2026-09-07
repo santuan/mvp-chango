@@ -4,7 +4,7 @@ import { useCart } from '../composables/useCart'
 import { useCartModals } from '../composables/useCartModals'
 
 const { subtotal, saving, cartTotal, totalItems, totalProducts } = useCart()
-const { openScan, checkoutModalOpen, openAssistance } = useCartModals()
+const { openScan, checkoutModalOpen } = useCartModals()
 
 interface Category {
   id: number
@@ -285,10 +285,10 @@ function backToCategories(): void {
             class="flex-1 max-h-[calc(100vh-15rem)] "
             :fuse="paletteFuse"
             :input="false"
+            :ui="{
+              item: 'data-highlighted:not-data-disabled:before:bg-gray-300'
+            }"
             @update:model-value="onSelectPaletteItem"
-             :ui="{
-    item: 'data-highlighted:not-data-disabled:before:bg-gray-300'
-  }"
           >
             <template #empty>
               <div class="flex flex-col items-center gap-2 py-6 text-neutral-500">
