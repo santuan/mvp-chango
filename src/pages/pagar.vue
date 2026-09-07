@@ -71,20 +71,32 @@ function startSplit(): void {
 }
 
 function simulateQrPaid(): void {
-  paidCount.value += 1
-  step.value = 'generating'
+  step.value = 'verifying'
   window.setTimeout(() => {
-    if (previousQrStep.value === 'qr-split' && splitCount.value && currentQr.value < splitCount.value) {
-      currentQr.value += 1
-      step.value = 'qr-split'
-    }
-    else {
+    paidCount.value += 1
+    const isSingle = previousQrStep.value === 'qr-single'
+    if (isSingle) {
       clearCart()
       step.value = 'success'
       window.setTimeout(() => {
         step.value = 'rating'
       }, 1600)
+      return
     }
+    step.value = 'generating'
+    window.setTimeout(() => {
+      if (previousQrStep.value === 'qr-split' && splitCount.value && currentQr.value < splitCount.value) {
+        currentQr.value += 1
+        step.value = 'qr-split'
+      }
+      else {
+        clearCart()
+        step.value = 'success'
+        window.setTimeout(() => {
+          step.value = 'rating'
+        }, 1600)
+      }
+    }, 1400)
   }, 1400)
 }
 
@@ -265,9 +277,6 @@ function selectRating(n: number): void {
       <h1 class="text-3xl font-bold">
         {{ qrLabel }}
       </h1>
-      <p class="text-3xl">
-        {{ formatPrice(currentAmount) }}
-      </p>
       <div
         v-if="step === 'qr-split' && splitCount"
         class="flex gap-2"
@@ -279,6 +288,9 @@ function selectRating(n: number): void {
           :class="i < currentQr || (i === currentQr && paidCount >= i) ? 'bg-green-600' : i === currentQr ? 'bg-black' : 'bg-neutral-400'"
         />
       </div>
+      <p class="text-3xl">
+        {{ formatPrice(currentAmount) }}
+      </p>
       <div class="flex flex-col h-80 w-80 items-center justify-center bg-neutral-100">
         <UIcon
           name="i-lucide-qr-code"
@@ -303,6 +315,7 @@ function selectRating(n: number): void {
         Mock: acercá el lector o simulá el resultado
       </p> -->
       <UButton
+        v-if="step === 'qr-single'"
         variant="outline"
         color="neutral"
         size="xl"
@@ -342,12 +355,15 @@ function selectRating(n: number): void {
       >
         Pago registrado
       </h1>
-      <p class="flex items-center gap-2 font-semibold">
+      <p
+        v-if="previousQrStep === 'qr-split' && splitCount && paidCount < splitCount"
+        class="flex items-center gap-2 font-semibold"
+      >
         <UIcon
           name="i-lucide-loader-2"
           class="size-5 animate-spin"
         />
-        Generando QR {{ previousQrStep === 'qr-split' && splitCount && paidCount < splitCount ? paidCount + 1 : '' }}...
+        Generando QR {{ paidCount + 1 }}...
       </p>
     </section>
 
@@ -399,15 +415,6 @@ function selectRating(n: number): void {
         {{ errorTitle }}
       </h1>
       <div class="flex flex-col gap-3 sm:flex-row">
-        <UButton
-          variant="outline"
-          color="neutral"
-          size="xl"
-          block
-          class="h-18 px-6 rounded-2xl font-bold w-64"
-          label="Cancelar"
-          @click="backToModality"
-        />
         <UButton
           variant="outline"
           color="neutral"

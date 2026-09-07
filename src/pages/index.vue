@@ -116,7 +116,7 @@
             >{{ formatPrice(lineTotal(product)) }}</span>
             <UButton
               color="error"
-              variant="outline"
+              variant="solid"
               icon="i-lucide-trash-2"
               aria-label="Eliminar del carrito"
               class="p-4"

@@ -254,7 +254,7 @@ function backToCategories(): void {
 
         <!-- Categories view -->
         <div v-if="view === 'categories'">
-          <div class="flex justify-start hover:bg-gray-200 w-full focus-within:border-green-600 border-4 h-10 items-center">
+          <div class="flex justify-start hover:bg-gray-200 rounded-full w-full focus-within:border-green-600 border-4 h-10 items-center">
             <div class="w-10 flex justify-center items-center">
               <UIcon name="i-lucide-search" />
             </div>
@@ -267,9 +267,10 @@ function backToCategories(): void {
             <UButton
               v-if="searchQuery"
               type="button"
+              size="lg"
               aria-label="Limpiar búsqueda"
               title="Limpiar búsqueda"
-              class="shrink-0 mr-2"
+              class="shrink-0 rounded-full"
               variant="outline"
               color="neutral"
               @click="searchQuery = ''"
@@ -286,7 +287,8 @@ function backToCategories(): void {
             :fuse="paletteFuse"
             :input="false"
             :ui="{
-              item: 'data-highlighted:not-data-disabled:before:bg-gray-300'
+              item: 'data-highlighted:not-data-disabled:before:bg-gray-300',
+              label: 'text-foreground'
             }"
             @update:model-value="onSelectPaletteItem"
           >

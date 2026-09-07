@@ -204,13 +204,16 @@ defineExpose({ openScan, checkoutModalOpen, assistanceModalOpen, openAssistance 
         </div>
         <div class="flex flex-col gap-3 md:flex-row md:justify-between">
           <UButton
-            class="bg-black px-10 font-bold text-white"
+            color="neutral"
+            variant="outline"
+            class="h-18 px-6 rounded-2xl font-bold"
             label="Cancelar"
             @click="removeModalOpen = false"
           />
           <UButton
+            size="xl"
+            class="h-18 px-6 rounded-2xl font-bold"
             color="error"
-            class="px-10 font-bold"
             label="Eliminar del carrito"
             @click="confirmRemove"
           />
