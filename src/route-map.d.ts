@@ -45,6 +45,13 @@ declare module 'vue-router/auto-routes' {
       Record<never, never>,
       | never
     >,
+    '/carrito': RouteRecordInfo<
+      '/carrito',
+      '/carrito',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
     '/guiar': RouteRecordInfo<
       '/guiar',
       '/guiar',
@@ -83,6 +90,14 @@ declare module 'vue-router/auto-routes' {
     'src/pages/buscar.vue': {
       routes:
         | '/buscar'
+      views:
+        | never
+      pathParamNames:
+        | never
+    }
+    'src/pages/carrito.vue': {
+      routes:
+        | '/carrito'
       views:
         | never
       pathParamNames:

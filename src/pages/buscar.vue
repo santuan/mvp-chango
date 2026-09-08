@@ -244,7 +244,7 @@ function backToCategories(): void {
         <!-- <div class="flex flex-col gap-3 pb-6">
           <UInput
             v-model="searchQuery"
-            placeholder="Busca producto..."
+            placeholder="Buscar producto..."
             icon="i-lucide-search"
             size="xl"
             @input="onSearch"
@@ -409,7 +409,7 @@ function backToCategories(): void {
               />
             </div>
             <div class="flex justify-center items-center">
-              <h1 class="flex-1 text-center text-xl font-bold">
+              <h1 class="flex-1 text-center text-2xl font-bold">
                 {{ selectedCategory?.name }}
               </h1>
             </div>
@@ -438,7 +438,7 @@ function backToCategories(): void {
                   <div class="flex text-left w-full flex-col items-start justify-center ">
                     <span class="text-lg">{{ product.name }}</span>
                     <span
-                      class="text-xs font-bold"
+                      class="text-xl font-bold"
                       :class="product.discount ? 'text-green-600' : ''"
                     >
                       {{ formatPrice(product.price) }}
@@ -535,6 +535,7 @@ function backToCategories(): void {
               :key="related.id"
               variant="outline"
               color="neutral"
+              class="p-0 overflow-hidden rounded-2xl"
               size="xl"
               @click="openProduct(related)"
             >
@@ -576,8 +577,8 @@ function backToCategories(): void {
 
       <!-- Side actions -->
       <aside class="flex w-full flex-col gap-4 bg-neutral-100 p-6 lg:w-72">
-        <h2 class="text-lg font-bold tracking-wide">
-          CHANGO
+        <h2 class="text-xl font-bold tracking-wide">
+          ChanGo!
         </h2>
         <!-- <UButton
           block
@@ -591,7 +592,7 @@ function backToCategories(): void {
           @click="openScan('add')"
         /> -->
         <UButton
-          to="/"
+          to="/carrito"
           block
           variant="outline"
           color="neutral"
@@ -610,7 +611,7 @@ function backToCategories(): void {
           active-class="opacity-50!"
           class="h-18 rounded-2xl font-bold"
           icon="i-lucide-search"
-          label="Busca producto"
+          label="Buscar producto"
         />
         <!-- <UButton
           block

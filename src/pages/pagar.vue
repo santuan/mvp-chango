@@ -155,7 +155,7 @@ function selectRating(n: number): void {
      
       <div class="flex flex-col gap-4 pt-4 sm:flex-row">
         <UButton
-          to="/"
+          to="/carrito"
           variant="outline"
           color="neutral"
           size="xl"
@@ -398,7 +398,7 @@ function selectRating(n: number): void {
           name="i-lucide-loader-2"
           class="size-5 animate-spin"
         />
-        Generando comprobante
+        <!-- Generando comprobante -->
       </p>
     </section>
 

@@ -31,7 +31,10 @@ defineExpose({ openScan, checkoutModalOpen, assistanceModalOpen, openAssistance 
 
 <template>
   <!-- Scan modal -->
-  <UModal v-model:open="scanModalOpen">
+  <UModal
+    v-model:open="scanModalOpen"
+    class="max-w-xl"
+  >
     <template #content>
       <div class="flex flex-col items-center gap-4 bg-white text-gray-950 p-6 text-center">
         <div class="flex w-full items-center justify-between">
@@ -50,11 +53,11 @@ defineExpose({ openScan, checkoutModalOpen, assistanceModalOpen, openAssistance 
         <div class="flex h-56 w-56 items-center justify-center bg-neutral-100">
           <UIcon
             name="i-lucide-scan-barcode"
-            class="size-24 text-neutral-500"
+            class="size-24 text-neutral-500 animate-pulse"
           />
         </div>
-        <p class="text-sm font-semibold">
-          {{ scanMode === 'remove' ? 'Acerque el producto a eliminar al código de barras' : 'Acerque el producto al código de barras' }}
+        <p class="text-xl font-semibold">
+          {{ scanMode === 'remove' ? 'Acerque el producto al código de barras para eliminarlo' : 'Acerque el producto al código de barras' }}
         </p>
         <div class="flex flex-col gap-3 sm:flex-row">
           <UButton
@@ -78,9 +81,6 @@ defineExpose({ openScan, checkoutModalOpen, assistanceModalOpen, openAssistance 
         <div class="flex items-center justify-between">
           <h3 class="font-bold">
             Agregando al carrito
-            <span v-if="selectedProduct">
-              {{ selectedProduct.name }}
-            </span>
           </h3>
           <UButton
             color="neutral"
@@ -98,6 +98,12 @@ defineExpose({ openScan, checkoutModalOpen, assistanceModalOpen, openAssistance 
             />
           </div>
           <div class="flex flex-1 flex-col gap-3">
+            <p
+              v-if="selectedProduct"
+              class="text-2xl"
+            >
+              {{ selectedProduct.name }}
+            </p>
             <p class="text-3xl font-bold">
               {{ selectedProduct ? formatPrice(selectedProduct.unitPrice * modalQty) : '' }}
             </p>
@@ -233,7 +239,7 @@ defineExpose({ openScan, checkoutModalOpen, assistanceModalOpen, openAssistance 
           ¿Listo para pagar?
         </h3>
         <ol class=" gap-2 text-lg list-decimal font-semibold">
-          <li>Diríjase a la zona de salida para pago sin fila.</li>
+          <li>Diríjase a la zona de salida para <b>Pago sin fila</b>.</li>
           <li>Haga click en la opción finalizar compra</li>
         </ol>
         <div class="flex flex-col gap-9 md:flex-row">

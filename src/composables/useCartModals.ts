@@ -83,7 +83,8 @@ export function useCartModals() {
       description: `${selectedProduct.value.name} · x${modalQty.value}`,
       color: 'success',
       icon: 'i-lucide-shopping-cart',
-      duration: 1500
+      duration: 3000,
+      progress: false
     })
     setTimeout(() => { justAddedId.value = null }, 1500)
   }
@@ -105,7 +106,8 @@ export function useCartModals() {
       description: removedName,
       color: 'error',
       icon: 'i-lucide-trash-2',
-      duration: 1500
+      duration: 3000,
+      progress: false
     })
   }
 

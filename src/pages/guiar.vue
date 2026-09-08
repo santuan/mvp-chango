@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import NumberFlow from '@number-flow/vue'
 import { useToast } from '@nuxt/ui/composables'
 import { useCart } from '../composables/useCart'
@@ -108,6 +108,7 @@ const steps: GuideStep[] = [
 ]
 
 const route = useRoute()
+const router = useRouter()
 const { products } = useCart()
 const toast = useToast()
 
@@ -117,7 +118,6 @@ const target = computed(() => {
 })
 
 const meters = ref(5)
-const finished = ref(false)
 const arrived = ref(false)
 const confirming = ref(false)
 const quantity = ref(1)
@@ -179,9 +179,10 @@ function confirmAdd(): void {
     description: `${target.value.name} · x${quantity.value}`,
     color: 'success',
     icon: 'i-lucide-shopping-cart',
-    duration: 1500
+    progress: false,
+    duration: 3000
   })
-  finished.value = true
+  router.push('/carrito')
 }
 </script>
 
@@ -189,7 +190,7 @@ function confirmAdd(): void {
   <div class="flex min-h-screen flex-col items-center bg-neutral-200 p-6 text-black">
     <!-- Guide loop -->
     <section
-      v-if="!finished && !confirming"
+      v-if="!confirming"
       class="flex w-full max-w-2xl flex-1 flex-col items-center justify-center gap-5 text-center"
     >
       <p class="px-6 py-2 text-xl font-bold text-black">
@@ -241,7 +242,7 @@ function confirmAdd(): void {
 
     <!-- Confirm add to cart -->
     <section
-      v-else-if="confirming && !finished"
+      v-else
       class="flex w-full max-w-2xl flex-1 flex-col items-center justify-center gap-6 text-center"
     >
       <UIcon
@@ -294,39 +295,6 @@ function confirmAdd(): void {
           label="Confirmar"
           icon="i-lucide-check"
           @click="confirmAdd"
-        />
-      </div>
-    </section>
-
-    <!-- End: added to cart -->
-    <section
-      v-else
-      class="flex w-full max-w-2xl flex-1 flex-col items-center justify-center gap-5 text-center"
-    >
-      <UIcon
-        name="i-lucide-check-circle-2"
-        class="size-24 text-green-600"
-      />
-      <h1 class="text-3xl font-bold">
-        Producto agregado al carrito
-      </h1>
-      <p class="font-semibold">
-        {{ target.name }} · {{ formatPrice(target.price) }}
-      </p>
-      <div class="flex flex-col gap-4 sm:flex-row">
-        <UButton
-          to="/"
-          size="xl"
-          class="bg-black px-12 py-4 font-bold text-white"
-          label="Ver Carrito"
-        />
-        <UButton
-          to="/buscar"
-          size="xl"
-          color="neutral"
-          variant="outline"
-          class="px-12 py-4 font-bold"
-          label="Seguir buscando"
         />
       </div>
     </section>
