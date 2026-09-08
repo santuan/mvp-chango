@@ -264,7 +264,7 @@ function backToCategories(): void {
               aria-label="Buscar en todos los productos"
               class="w-full outline-0 "
             >
-            <UButton
+            <!-- <UButton
               v-if="searchQuery"
               type="button"
               size="lg"
@@ -273,10 +273,9 @@ function backToCategories(): void {
               class="shrink-0 rounded-full"
               variant="outline"
               color="neutral"
+              icon="i-lucide-x"
               @click="searchQuery = ''"
-            >
-              Limpiar búsqueda
-            </UButton>
+            /> -->
           </div>
         
           <UCommandPalette
@@ -293,12 +292,14 @@ function backToCategories(): void {
             @update:model-value="onSelectPaletteItem"
           >
             <template #empty>
-              <div class="flex flex-col items-center gap-2 py-6 text-neutral-500">
+              <div class="flex flex-col items-center gap-3 py-6 text-neutral-500">
                 <UIcon
                   name="i-lucide-search-x"
-                  class="size-10"
+                  class="size-24"
                 />
-                <p>Sin resultados para "{{ searchQuery }}"</p>
+                <p class="text-xl">
+                  Sin resultados para <b>{{ searchQuery }}</b>
+                </p>
                 <UButton
                   type="button"
                   aria-label="Limpiar búsqueda"

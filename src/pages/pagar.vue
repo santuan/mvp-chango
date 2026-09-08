@@ -394,7 +394,7 @@ function selectRating(n: number): void {
         Pago dividido. Máximo 4 personas.
       </h1>
       <h2 class="text-center text-3xl max-w-2xl my-6 mx-auto font-bold">
-        Seleccione en cuando quiere dividir el pago y haga click en generar QR.
+        Seleccione en cuanto quiere dividir el pago y haga click en generar QR.
       </h2>
       <div class="flex flex-col gap-4 md:flex-row">
         <UButton
