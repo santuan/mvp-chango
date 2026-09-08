@@ -1,9 +1,117 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import confetti from 'canvas-confetti'
-import { useCart } from '../composables/useCart'
+import { lineTotal, useCart } from '../composables/useCart'
+import type { CartProduct } from '../composables/useCart'
 
-const { cartTotal, clearCart } = useCart()
+const { products, subtotal, saving, cartTotal, clearCart } = useCart()
+
+const allCategories = [
+  { id: 1, name: 'Lácteos' },
+  { id: 2, name: 'Panadería' },
+  { id: 3, name: 'Huevos' },
+  { id: 4, name: 'Aceites y Vinagres' },
+  { id: 5, name: 'Arroz y Legumbres' },
+  { id: 6, name: 'Pastas' },
+  { id: 7, name: 'Azúcar y Endulzantes' },
+  { id: 8, name: 'Yerba y Café' },
+  { id: 9, name: 'Gaseosas' },
+  { id: 10, name: 'Aguas' },
+  { id: 11, name: 'Cervezas y Vinos' },
+  { id: 12, name: 'Limpieza' },
+  { id: 13, name: 'Higiene Personal' },
+  { id: 14, name: 'Carnes' },
+  { id: 15, name: 'Frutas y Verduras' },
+]
+
+const catalogCategoryByName = new Map<string, number>([
+  ['Leche entera 1L', 1],
+  ['Leche descremada 1L', 1],
+  ['Manteca 200g', 1],
+  ['Queso cremoso 500g', 1],
+  ['YogurNatural x4', 1],
+  ['Queso rallado 250g', 1],
+  ['Pan lactal', 2],
+  ['Pan francés x12', 2],
+  ['Medialunas x6', 2],
+  ['Facturas x6', 2],
+  ['Huevos x12', 3],
+  ['Huevos x6', 3],
+  ['Huevos blancos x12', 3],
+  ['Aceite de oliva 500ml', 4],
+  ['Aceite de girasol 1L', 4],
+  ['Vinagre de manzana 500ml', 4],
+  ['Aceite de maíz 1L', 4],
+  ['Arroz 1kg', 5],
+  ['Frijoles 500g', 5],
+  ['Lentejas 500g', 5],
+  ['Garbanzos 500g', 5],
+  ['Fideos 500g', 6],
+  ['Spaghetti 500g', 6],
+  ['Ñoquis 500g', 6],
+  ['Ravioles 500g', 6],
+  ['Azúcar 1kg', 7],
+  ['Endulzante x100', 7],
+  ['Miel 500g', 7],
+  ['Yerba mate 500g', 8],
+  ['Café molido 250g', 8],
+  ['Café instantáneo 100g', 8],
+  ['Té negro x24', 8],
+  ['Gaseosa 2.25L', 9],
+  ['Gaseosa 500ml', 9],
+  ['Jugo en polvo x10', 9],
+  ['Agua saborizada 500ml', 9],
+  ['Agua mineral 2L', 10],
+  ['Agua mineral 500ml', 10],
+  ['Agua saborizada 1L', 10],
+  ['Cerveza x6', 11],
+  ['Cerveza artesanal x3', 11],
+  ['Vino tinto 750ml', 11],
+  ['Vino blanco 750ml', 11],
+  ['Detergente 1L', 12],
+  ['Lavandina 1L', 12],
+  ['Jabón en polvo 800g', 12],
+  ['Esponjas x3', 12],
+  ['Jabón en barra', 13],
+  ['Shampoo 400ml', 13],
+  ['Pasta dental 90g', 13],
+  ['Papel higiene x4', 13],
+  ['Bondiola 1kg', 14],
+  ['Pechuga de pollo 1kg', 14],
+  ['Carne picada 1kg', 14],
+  ['Chorizo x6', 14],
+  ['Banana 1kg', 15],
+  ['Manzana 1kg', 15],
+  ['Tomate 1kg', 15],
+  ['Cebolla 1kg', 15],
+  ['Papa 1kg', 15],
+])
+
+interface CartGroup {
+  categoryId: number
+  categoryName: string
+  items: CartProduct[]
+}
+
+const groupedCart = computed<CartGroup[]>(() => {
+  const buckets = new Map<number, CartProduct[]>()
+  for (const p of products.value) {
+    const catId = catalogCategoryByName.get(p.name) ?? 0
+    const list = buckets.get(catId) ?? []
+    list.push(p)
+    buckets.set(catId, list)
+  }
+  const groups: CartGroup[] = []
+  for (const cat of allCategories) {
+    const items = buckets.get(cat.id)
+    if (items?.length)
+      groups.push({ categoryId: cat.id, categoryName: cat.name, items })
+  }
+  const others = buckets.get(0)
+  if (others?.length)
+    groups.push({ categoryId: 0, categoryName: 'Otros', items: others })
+  return groups
+})
 
 type PayStep =
   | 'total'
@@ -137,41 +245,99 @@ function selectRating(n: number): void {
     <!-- Total -->
     <section
       v-if="step === 'total'"
-      class="flex w-full max-w-3xl flex-1 flex-col items-center justify-center gap-4 text-center"
+      class="flex w-full max-w-6xl flex-1 flex-col justify-center gap-6"
     >
-      <p class="text-xl font-bold">
-        Total a pagar
-      </p>
-      <p class="text-7xl font-bold text-green-600">
-        {{ formatPrice(cartTotal) }}
-      </p>
-      <p>Con descuentos aplicados</p>
-      <p
-        v-if="cartTotal === 0"
-        class="font-semibold text-red-600"
-      >
-        El carrito está vacío, escaneá un producto para continuar
-      </p>
-     
-      <div class="flex flex-col gap-4 pt-4 sm:flex-row">
-        <UButton
-          to="/carrito"
-          variant="outline"
-          color="neutral"
-          size="xl"
-          block
-          class="h-18 px-6 rounded-2xl font-bold w-64"
-          label="Volver atras"
-        />
-        <UButton
-          color="success"
-          size="xl"
-          block
-          class="h-18 px-6 rounded-2xl font-bold w-64"
-          label="Pagar"
-          :disabled="cartTotal === 0"
-          @click="goModality"
-        />
+      <div class="grid items-center gap-20 md:grid-cols-2 ">
+        <div class="overflow-hidden rounded-2xl border border-neutral-200 bg-white text-left">
+          <p class="border-b border-neutral-200 px-4 py-3 text-lg font-bold">
+            Detalle de la compra ({{ products.length }})
+          </p>
+          <div class="max-h-150 overflow-y-auto">
+            <template
+              v-for="group in groupedCart"
+              :key="group.categoryId"
+            >
+              <p class="bg-neutral-100 px-4 py-2 text-xs font-bold uppercase tracking-wide text-neutral-600">
+                {{ group.categoryName }} ({{ group.items.length }})
+              </p>
+              <div
+                v-for="product in group.items"
+                :key="product.id"
+                class="flex items-center gap-3 border-b border-neutral-100 p-3 last:border-b-0"
+              >
+                <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-neutral-200">
+                  <UIcon
+                    name="i-lucide-shopping-bag"
+                    class="size-5 text-neutral-500"
+                  />
+                </div>
+                <div class="min-w-0 flex-1">
+                  <p class="truncate text-base font-bold">
+                    {{ product.name }}
+                  </p>
+                  <p class="text-sm text-neutral-500">
+                    {{ formatPrice(product.unitPrice) }} c/u · x{{ product.quantity }}
+                  </p>
+                  <p
+                    v-if="product.discountPercent"
+                    class="text-xs font-semibold text-green-600"
+                  >
+                    Descuento {{ product.discountPercent }}% aplicado
+                  </p>
+                </div>
+                <span
+                  class="shrink-0 text-base font-bold"
+                  :class="product.discountPercent ? 'text-green-600' : ''"
+                >{{ formatPrice(lineTotal(product)) }}</span>
+              </div>
+            </template>
+            <p
+              v-if="products.length === 0"
+              class="p-6 text-center text-sm text-neutral-500"
+            >
+              No hay productos en el carrito
+            </p>
+          </div>
+          <div class="flex items-center justify-between bg-neutral-50 px-4 py-3 text-sm font-semibold">
+            <span>Subtotal: {{ formatPrice(subtotal) }}</span>
+            <span class="text-green-600">Ahorro: {{ formatPrice(saving) }}</span>
+          </div>
+        </div>
+        <div class="flex flex-col items-center justify-center gap-4 text-center">
+          <p class="text-xl font-bold">
+            Total a pagar
+          </p>
+          <p class="text-7xl font-bold text-green-600">
+            {{ formatPrice(cartTotal) }}
+          </p>
+          <p>Con descuentos aplicados</p>
+          <p
+            v-if="cartTotal === 0"
+            class="font-semibold text-red-600"
+          >
+            El carrito está vacío, escaneá un producto para continuar
+          </p>
+          <div class="flex flex-col gap-4 pt-4 sm:flex-row md:flex-col lg:flex-row">
+            <UButton
+              to="/carrito"
+              variant="outline"
+              color="neutral"
+              size="xl"
+              block
+              class="h-18 px-6 rounded-2xl font-bold w-64"
+              label="Volver atras"
+            />
+            <UButton
+              color="success"
+              size="xl"
+              block
+              class="h-18 px-6 rounded-2xl font-bold w-64"
+              label="Pagar"
+              :disabled="cartTotal === 0"
+              @click="goModality"
+            />
+          </div>
+        </div>
       </div>
     </section>
 
