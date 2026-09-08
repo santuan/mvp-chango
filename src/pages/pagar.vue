@@ -252,7 +252,7 @@ function selectRating(n: number): void {
           <p class="border-b border-neutral-200 px-4 py-3 text-lg font-bold">
             Detalle de la compra ({{ products.length }})
           </p>
-          <div class="max-h-150 overflow-y-auto">
+          <div class="max-h-120 overflow-y-auto">
             <template
               v-for="group in groupedCart"
               :key="group.categoryId"
