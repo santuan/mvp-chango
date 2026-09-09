@@ -424,7 +424,7 @@ function resetSearch(): void {
             </div>
           </div>
           
-          <div class="max-h-[calc(100vh-20rem)] min-h-[calc(100vh-20rem)] overflow-y-auto mt-4">
+          <div class="max-h-[calc(100vh-20rem)] p-2 min-h-[calc(100vh-20rem)] overflow-y-auto mt-4">
             <div class="grid grid-cols-2 gap-2 md:grid-cols-3 place-content-start">
               <UButton
                 v-for="product in productsInCategory"
