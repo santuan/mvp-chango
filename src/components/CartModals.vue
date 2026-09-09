@@ -111,9 +111,11 @@ defineExpose({ openScan, checkoutModalOpen, assistanceModalOpen, openAssistance 
               <UButton
                 size="xl"
                 color="neutral"
+                class="disabled:opacity-50"
                 variant="outline"
                 icon="i-lucide-minus"
                 aria-label="Quitar uno"
+                :disabled="modalQty <= 1"
                 @click="decreaseQty"
               />
               <span class="flex w-16 items-center justify-center bg-neutral-200 py-1 text-2xl font-bold">{{ modalQty }}</span>

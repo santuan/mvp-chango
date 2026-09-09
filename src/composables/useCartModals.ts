@@ -71,16 +71,17 @@ export function useCartModals() {
       addModalOpen.value = false
       return
     }
+    const qty = Math.max(1, Math.floor(modalQty.value) || 1)
     const existing = products.value.find(p => p.id === selectedProduct.value?.id)
     if (existing)
-      existing.quantity += modalQty.value
+      existing.quantity += qty
     else
-      products.value.unshift({ ...selectedProduct.value, quantity: modalQty.value })
+      products.value.unshift({ ...selectedProduct.value, quantity: qty })
     addModalOpen.value = false
     justAddedId.value = selectedProduct.value.id
     toast.add({
       title: 'Producto agregado al carrito',
-      description: `${selectedProduct.value.name} · x${modalQty.value}`,
+      description: `${selectedProduct.value.name} · x${qty}`,
       color: 'success',
       icon: 'i-lucide-shopping-cart',
       duration: 3000,
@@ -116,7 +117,7 @@ export function useCartModals() {
   }
 
   function decreaseQty(): void {
-    if (modalQty.value > 0)
+    if (modalQty.value > 1)
       modalQty.value -= 1
   }
 

@@ -233,6 +233,14 @@ function backToCategories(): void {
   selectedCategory.value = null
   selectedProduct.value = null
 }
+
+function resetSearch(): void {
+  searchQuery.value = ''
+  page.value = 1
+  view.value = 'categories'
+  selectedCategory.value = null
+  selectedProduct.value = null
+}
 </script>
 
 <template>
@@ -254,7 +262,7 @@ function backToCategories(): void {
 
         <!-- Categories view -->
         <div v-if="view === 'categories'">
-          <div class="flex justify-start hover:bg-gray-200 rounded-full w-full focus-within:border-green-600 border-4 h-10 items-center">
+          <div class="flex justify-start hover:bg-gray-200 rounded-full w-full outline-4 outline-offset-2! focus-within:outline-blue-600 outline-neutral-950 h-10 mb-6 items-center">
             <div class="w-10 flex justify-center items-center">
               <UIcon name="i-lucide-search" />
             </div>
@@ -332,9 +340,9 @@ function backToCategories(): void {
           </UCommandPalette>
           <div
             v-if="!isSearching"
-            class="max-h-[calc(100vh-20rem)] min-h-[calc(100vh-20rem)] overflow-y-auto mt-6"
+            class="max-h-[calc(100vh-20rem)] p-2 min-h-[calc(100vh-20rem)] overflow-y-auto mt-6"
           >
-            <div class="grid grid-cols-2 gap-2 md:grid-cols-4 place-content-start">
+            <div class="grid grid-cols-2  gap-2 md:grid-cols-4 place-content-start">
               <UButton
                 v-for="category in paged"
                 :key="category.id"
@@ -368,7 +376,7 @@ function backToCategories(): void {
 
           <div
             v-if="!isSearching"
-            class="flex flex-col items-center justify-between mt-2 gap-4 sm:flex-row"
+            class="flex flex-col items-center px-2  justify-between mt-2 gap-4 sm:flex-row"
           >
             <UButton
               variant="outline"
@@ -613,6 +621,7 @@ function backToCategories(): void {
           class="h-18 rounded-2xl font-bold"
           icon="i-lucide-search"
           label="Buscar producto"
+          @click="resetSearch"
         />
         <!-- <UButton
           block
