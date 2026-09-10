@@ -425,7 +425,7 @@ function resetSearch(): void {
           </div>
           
           <div class="max-h-[calc(100vh-20rem)] p-2 min-h-[calc(100vh-20rem)] overflow-y-auto mt-4">
-            <div class="grid grid-cols-2 gap-2 md:grid-cols-3 place-content-start">
+            <div class="grid grid-cols-2 gap-2 md:grid-cols-2 xl:grid-cols-3 place-content-start">
               <UButton
                 v-for="product in productsInCategory"
                 :key="product.id"
@@ -437,7 +437,7 @@ function resetSearch(): void {
                 @click="openProduct(product)"
               >
                 <div class="flex gap-4 w-full">
-                  <div class="flex justify-center items-center shrink-0 h-40 bg-neutral-700 w-40">
+                  <div class="flex justify-center items-center shrink-0 h-24 w-24 xl:h-40 bg-neutral-700 xl:w-40">
                     <UIcon
                       name="i-lucide-shopping-bag"
                       class="size-6 text-neutral-400"
@@ -549,7 +549,7 @@ function resetSearch(): void {
               @click="openProduct(related)"
             >
               <div class="flex gap-4 w-full">
-                <div class="flex justify-center items-center shrink-0 h-24 bg-neutral-700 w-24">
+                <div class="flex justify-center items-center shrink-0 h-20 bg-neutral-700 w-20">
                   <UIcon
                     name="i-lucide-shopping-bag"
                     class="size-6 text-neutral-400"
@@ -557,7 +557,7 @@ function resetSearch(): void {
                 </div>
 
                 <div class="flex text-left w-full flex-col items-start justify-center ">
-                  <span class="text-lg">{{ related.name }}</span>
+                  <span class="text-base">{{ related.name }}</span>
                   <span
                     class="text-xs font-bold"
                     :class="related.discount ? 'text-green-600' : ''"
