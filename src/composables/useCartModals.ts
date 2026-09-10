@@ -13,6 +13,7 @@ const selectedProduct = ref<CartProduct | null>(null)
 const modalQty = ref(1)
 const scanMode = ref<'add' | 'remove'>('add')
 const justAddedId = ref<number | null>(null)
+const guidedProduct = ref<CartProduct | null>(null)
 
 const scanCatalog: CartProduct[] = [
   { id: 1, name: 'Leche entera 1L', unitPrice: 1200, quantity: 0 },
@@ -46,6 +47,13 @@ export function useCartModals() {
 
   function openScan(mode: 'add' | 'remove'): void {
     scanMode.value = mode
+    guidedProduct.value = null
+    scanModalOpen.value = true
+  }
+
+  function openGuidedScan(product: CartProduct): void {
+    scanMode.value = 'add'
+    guidedProduct.value = { ...product }
     scanModalOpen.value = true
   }
 
@@ -59,8 +67,9 @@ export function useCartModals() {
       openRemove(item)
       return
     }
-    const item = scanCatalog[scanIndex.value % scanCatalog.length]
-    scanIndex.value += 1
+    const item = guidedProduct.value ?? scanCatalog[scanIndex.value % scanCatalog.length]
+    if (!guidedProduct.value)
+      scanIndex.value += 1
     selectedProduct.value = { ...item }
     modalQty.value = 1
     addModalOpen.value = true
@@ -145,7 +154,9 @@ export function useCartModals() {
     modalQty,
     scanMode,
     justAddedId,
+    guidedProduct,
     openScan,
+    openGuidedScan,
     simulateScan,
     confirmAdd,
     openRemove,

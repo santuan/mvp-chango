@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import NumberFlow from '@number-flow/vue'
-import { useToast } from '@nuxt/ui/composables'
-import { useCart } from '../composables/useCart'
+import { useCartModals } from '../composables/useCartModals'
 
 interface GuideStep {
   instruction: string
@@ -109,8 +108,8 @@ const steps: GuideStep[] = [
 
 const route = useRoute()
 const router = useRouter()
-const { products } = useCart()
-const toast = useToast()
+const { openGuidedScan, addModalOpen, justAddedId } = useCartModals()
+const awaitingAdd = ref(false)
 
 const target = computed(() => {
   const id = Number(route.query.id ?? 1)
@@ -119,8 +118,6 @@ const target = computed(() => {
 
 const meters = ref(5)
 const arrived = ref(false)
-const confirming = ref(false)
-const quantity = ref(1)
 
 // The arrow leg follows the remaining distance.
 const stepIndex = computed(() => {
@@ -157,40 +154,34 @@ onUnmounted(() => {
   window.clearInterval(timer)
 })
 
-function answerYes(): void {
+function handleAdd(): void {
   window.clearInterval(timer)
-  confirming.value = true
+  justAddedId.value = null
+  awaitingAdd.value = true
+  openGuidedScan({
+    id: target.value.id,
+    name: target.value.name,
+    unitPrice: target.value.price,
+    quantity: 0,
+    discountPercent: target.value.discount
+  })
 }
 
-function confirmAdd(): void {
-  const existing = products.value.find(p => p.id === target.value.id)
-  if (existing)
-    existing.quantity += quantity.value
-  else
-    products.value.push({
-      id: target.value.id,
-      name: target.value.name,
-      unitPrice: target.value.price,
-      quantity: quantity.value,
-      discountPercent: target.value.discount
-    })
-  toast.add({
-    title: 'Producto agregado al carrito',
-    description: `${target.value.name} · x${quantity.value}`,
-    color: 'success',
-    icon: 'i-lucide-shopping-cart',
-    progress: false,
-    duration: 3000
-  })
-  router.push('/carrito')
-}
+// Cuando el modal confirma el agregado, redirigir a mi carrito.
+// Solo navega si el agregado vino de este flujo (awaitingAdd) y el
+// modal de agregar ya se cerró, así cancelar no redirige.
+watch([addModalOpen, justAddedId], ([isOpen, addedId]) => {
+  if (awaitingAdd.value && !isOpen && addedId !== null) {
+    awaitingAdd.value = false
+    router.push('/carrito')
+  }
+})
 </script>
 
 <template>
   <div class="flex min-h-screen flex-col items-center bg-neutral-200 p-6 text-black">
     <!-- Guide loop -->
     <section
-      v-if="!confirming"
       class="flex w-full max-w-2xl flex-1 flex-col items-center justify-center gap-5 text-center"
     >
       <p class="px-6 py-2 text-xl font-bold text-black">
@@ -233,70 +224,14 @@ function confirmAdd(): void {
           size="xl"
           color="success"
           class="px-14 py-5 text-xl font-bold"
-          label="Agregar al carrito"
-          icon="i-lucide-check"
-          @click="answerYes"
+          label="Escanear producto"
+          icon="i-lucide-scan-line"
+          @click="handleAdd"
         />
       </div>
     </section>
 
-    <!-- Confirm add to cart -->
-    <section
-      v-else
-      class="flex w-full max-w-2xl flex-1 flex-col items-center justify-center gap-6 text-center"
-    >
-      <UIcon
-        name="i-lucide-shopping-cart"
-        class="size-20 text-black"
-      />
-      <h1 class="text-3xl font-bold">
-        Agregar al carrito
-      </h1>
-      <p class="text-xl font-semibold">
-        {{ target.name }} · {{ formatPrice(target.price) }}
-      </p>
-
-      <div class="flex items-center gap-6">
-        <UButton
-          icon="i-lucide-minus"
-          size="xl"
-          color="neutral"
-          variant="outline"
-          :disabled="quantity <= 1"
-          @click="quantity--"
-        />
-        <span class="w-16 text-center text-5xl font-bold">
-          {{ quantity }}
-        </span>
-        <UButton
-          icon="i-lucide-plus"
-          size="xl"
-          color="neutral"
-          variant="outline"
-          @click="quantity++"
-        />
-      </div>
-
-      <p class="text-2xl font-bold">
-        Total: {{ formatPrice(target.price * quantity) }}
-      </p>
-
-      <div class="flex flex-col gap-4 sm:flex-row">
-        <UButton
-          size="xl"
-          class="bg-black px-14 py-5 text-xl font-bold text-white"
-          label="Cancelar"
-          to="/buscar"
-        />
-        <UButton
-          size="xl"
-          color="success"
-          class="px-14 py-5 text-xl font-bold"
-          label="Confirmar"
-          icon="i-lucide-check"
-          @click="confirmAdd"
-        />
-      </div>
-    </section>
+    <!-- Shared modals: scan -> add to cart -->
+    <CartModals />
   </div>
 </template>
