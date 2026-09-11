@@ -26,7 +26,7 @@ import { useCartModals } from '../composables/useCartModals';
 
 <template>
   <footer class="flex flex-col items-stretch min-h-32 gap-0 border-t border-neutral-200 bg-neutral-100 lg:flex-row">
-    <div class="border-l border-gray-700 shrink-0 flex justify-center items-center  p-3 w-64">
+    <div class="shrink-0 flex justify-center items-center  p-3 w-64">
       <button
         class="flex  items-center w-64 justify-center rounded-2xl gap-3 bg-red-100  hover:bg-red-200 border-red-600 font-bold h-18 text-red-600 disabled:border-gray-400 disabled:text-gray-400 disabled:bg-gray-200"
         :disabled="disableEliminar"
