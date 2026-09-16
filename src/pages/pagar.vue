@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import confetti from 'canvas-confetti'
+// import confetti from 'canvas-confetti'
 import { lineTotal, useCart } from '../composables/useCart'
 import type { CartProduct } from '../composables/useCart'
 
@@ -130,7 +130,7 @@ const splitCount = ref<2 | 3 | 4 | null>(null)
 const currentQr = ref(1)
 const paidCount = ref(0)
 const errorTitle = ref('No se registro el pago')
-const rating = ref<number | null>(null)
+// const rating = ref<number | null>(null)
 const previousQrStep = ref<'qr-single' | 'qr-split'>('qr-single')
 
 function formatPrice(value: number): string {
@@ -229,14 +229,29 @@ function backToModality(): void {
   step.value = 'modality'
 }
 
-function selectRating(n: number): void {
-  rating.value = n
-  confetti({
-    particleCount: n >= 4 ? 150 : 80,
-    spread: n >= 4 ? 100 : 70,
-    origin: { y: 0.6 },
-    disableForReducedMotion: true,
-  })
+// function selectRating(n: number): void {
+//   rating.value = n
+//   confetti({
+//     particleCount: n >= 4 ? 150 : 80,
+//     spread: n >= 4 ? 100 : 70,
+//     origin: { y: 0.6 },
+//     disableForReducedMotion: true,
+//   })
+// }
+
+const email = ref('')
+const emailSent = ref(false)
+const emailError = ref('')
+
+function sendReceipt(): void {
+  const value = email.value.trim()
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+    emailError.value = 'Ingresá un mail válido'
+    emailSent.value = false
+    return
+  }
+  emailError.value = ''
+  emailSent.value = true
 }
 </script>
 
@@ -481,14 +496,14 @@ function selectRating(n: number): void {
         Mock: acercá el lector o simulá el resultado
       </p> -->
       <UButton
-        v-if="step === 'qr-single'"
+        v-if="step === 'qr-single' || (step === 'qr-split' && paidCount === 0 && currentQr === 1)"
         variant="outline"
         color="neutral"
         size="xl"
         block
         class="h-18 w-64 px-6 rounded-2xl font-bold"
         label="Cancelar"
-        @click="backToModality"
+        @click="step === 'qr-single' ? backToModality() : goSplitSelect()"
       />
       
 
@@ -590,6 +605,16 @@ function selectRating(n: number): void {
           label="Generar nuevo QR"
           @click="retryQr"
         />
+        <UButton
+          v-if="previousQrStep === 'qr-split' && paidCount === 0 && currentQr === 1"
+          variant="outline"
+          color="neutral"
+          size="xl"
+          block
+          class="h-18 px-6 rounded-2xl font-bold w-64"
+          label="Cancelar"
+          @click="goSplitSelect"
+        />
       </div>
     </section>
 
@@ -605,7 +630,43 @@ function selectRating(n: number): void {
       <h1 class="text-3xl font-bold">
         Gracias por su compra
       </h1>
-      <p class="font-semibold">
+      <div class="flex w-full max-w-md flex-col gap-3">
+        <p class="font-semibold">
+          ¿Querés que te enviemos el comprobante por mail?
+        </p>
+        <div class="flex justify-start hover:bg-gray-200 rounded-full w-full outline-4 outline-offset-2! focus-within:outline-blue-600 outline-neutral-950 h-12 items-center">
+          <div class="w-10 flex justify-center items-center">
+            <UIcon name="i-lucide-mail" />
+          </div>
+          <input
+            v-model="email"
+            type="email"
+            placeholder="tu@mail.com"
+            aria-label="Mail para enviar el comprobante"
+            class="w-full outline-0 bg-transparent"
+          >
+        </div>
+        <UButton
+          color="success"
+          size="xl"
+          block
+          label="Enviar comprobante"
+          @click="sendReceipt"
+        />
+        <p
+          v-if="emailError"
+          class="text-sm font-semibold text-red-600"
+        >
+          {{ emailError }}
+        </p>
+        <p
+          v-if="emailSent"
+          class="text-sm font-semibold text-green-600"
+        >
+          Comprobante enviado a {{ email.trim() }}
+        </p>
+      </div>
+      <!-- <p class="font-semibold">
         ¿Como calificarias esta experiencia de compra?
       </p>
       <div class="flex gap-3">
@@ -617,11 +678,11 @@ function selectRating(n: number): void {
           :label="String(n)"
           @click="selectRating(n)"
         />
-      </div>
+      </div> -->
       <UButton
         to="/"
         class="bg-black px-12 font-semibold text-white"
-        label="Volver al inicio"
+        label="Finalizar compra"
       />
     </section>
   </div>
