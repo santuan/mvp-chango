@@ -8,6 +8,8 @@ const props = defineProps<{
   parts: number | null
   /** Amount charged per part when the payment was split. */
   amountPerPart: number
+  /** Per-person amounts for item-based splits. When present, takes precedence over amountPerPart. */
+  amounts?: number[]
   /** Digits to prefill when the customer comes back to resend the ticket. */
   initialPhone?: string
 }>()
@@ -81,11 +83,13 @@ const title = computed(() =>
     : 'Ingresa tu telefono para recibir el ticket'
 )
 
-const subtitle = computed(() =>
-  props.parts
-    ? `Recibirás el comprobante con las ${props.parts} partes de ${formatPrice(props.amountPerPart)} listo para reenviar.`
-    : `Recibirás el comprobante de ${formatPrice(props.total)} listo para reenviar.`
-)
+const subtitle = computed(() => {
+  if (props.parts && props.amounts?.length)
+    return `Recibirás el comprobante dividido (${props.amounts.map(a => formatPrice(a)).join(' + ')}) listo para reenviar.`
+  if (props.parts)
+    return `Recibirás el comprobante con las ${props.parts} partes de ${formatPrice(props.amountPerPart)} listo para reenviar.`
+  return `Recibirás el comprobante de ${formatPrice(props.total)} listo para reenviar.`
+})
 
 function pressKey(key: KeypadKey): void {
   if (sent.value)

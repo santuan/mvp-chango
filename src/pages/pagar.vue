@@ -1,10 +1,14 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onBeforeUnmount, ref } from 'vue'
+import { useRouter } from 'vue-router'
 // import confetti from 'canvas-confetti'
 import { lineTotal, useCart } from '../composables/useCart'
 import type { CartProduct } from '../composables/useCart'
+import BankPromotionsCard from '../components/BankPromotionsCard.vue'
+import TicketWhatsapp from '../components/TicketWhatsapp.vue'
 
 const { products, subtotal, saving, cartTotal, clearCart } = useCart()
+const router = useRouter()
 
 const allCategories = [
   { id: 1, name: 'Lácteos' },
@@ -123,15 +127,25 @@ type PayStep =
   | 'verifying'
   | 'success'
   | 'error'
-  | 'rating'
+  | 'receipt'
+  | 'thanks'
 
-const step = ref<PayStep>('total')
+const step = ref<PayStep>('modality')
 const splitCount = ref<2 | 3 | 4 | null>(null)
+const splitCartA = ref<CartProduct[]>([])
+const splitCartB = ref<CartProduct[]>([])
 const currentQr = ref(1)
 const paidCount = ref(0)
 const errorTitle = ref('No se registro el pago')
 // const rating = ref<number | null>(null)
 const previousQrStep = ref<'qr-single' | 'qr-split'>('qr-single')
+
+// The cart is cleared before the receipt screen renders, so the charged amounts
+// must be snapshotted while the cart still holds the products.
+const receiptTotal = ref(0)
+const receiptParts = ref<2 | 3 | 4 | null>(null)
+const receiptAmountPerPart = ref(0)
+const receiptAmounts = ref<number[]>([])
 
 function formatPrice(value: number): string {
   return `$${value.toLocaleString('es-AR')}`
@@ -141,17 +155,142 @@ function splitAmount(count: 2 | 3 | 4): number {
   return Math.round(cartTotal.value / count)
 }
 
+function splitListTotal(list: CartProduct[]): number {
+  return list.reduce((acc, p) => acc + lineTotal(p), 0)
+}
+
+const splitTotalA = computed(() => splitListTotal(splitCartA.value))
+const splitTotalB = computed(() => splitListTotal(splitCartB.value))
+const splitAmounts = computed(() => [splitTotalA.value, splitTotalB.value])
+const canStartSplit = computed(() => splitTotalA.value > 0 && splitTotalB.value > 0)
+
+function initSplitCarts(): void {
+  splitCartA.value = products.value.map(p => ({ ...p }))
+  splitCartB.value = []
+  splitCount.value = 2
+}
+
+function moveUnit(productId: number, from: 'A' | 'B'): void {
+  const src = from === 'A' ? splitCartA.value : splitCartB.value
+  const dst = from === 'A' ? splitCartB.value : splitCartA.value
+  const idx = src.findIndex(p => p.id === productId)
+  if (idx === -1)
+    return
+  const item = src[idx]!
+  const existing = dst.find(p => p.id === productId)
+  if (item.quantity > 1) {
+    item.quantity -= 1
+    if (existing)
+      existing.quantity += 1
+    else
+      dst.push({ ...item, quantity: 1 })
+  }
+  else {
+    src.splice(idx, 1)
+    if (existing)
+      existing.quantity += 1
+    else
+      dst.push({ ...item })
+  }
+}
+
+function moveAll(from: 'A' | 'B'): void {
+  const src = from === 'A' ? splitCartA.value : splitCartB.value
+  const dst = from === 'A' ? splitCartB.value : splitCartA.value
+  for (const item of src) {
+    const existing = dst.find(p => p.id === item.id)
+    if (existing)
+      existing.quantity += item.quantity
+    else
+      dst.push({ ...item })
+  }
+  src.splice(0, src.length)
+}
+
+function snapshotReceipt(isSingle: boolean): void {
+  const total = cartTotal.value
+  if (isSingle) {
+    receiptTotal.value = total
+    receiptParts.value = null
+    receiptAmountPerPart.value = total
+    receiptAmounts.value = []
+    return
+  }
+  // Item-based split for 2 people: each side pays its own cart total.
+  const totalA = splitTotalA.value
+  const totalB = splitTotalB.value
+  const hasAssignment = splitCartA.value.length > 0 || splitCartB.value.length > 0
+  receiptTotal.value = total
+  receiptParts.value = 2
+  if (hasAssignment && totalA + totalB > 0) {
+    receiptAmounts.value = [totalA, totalB]
+    receiptAmountPerPart.value = Math.round((totalA + totalB) / 2)
+  }
+  else {
+    const parts = splitCount.value ?? 2
+    receiptAmounts.value = []
+    receiptAmountPerPart.value = splitAmount(parts)
+  }
+}
+
+// Seconds the thank-you screen stays up before the terminal resets itself for
+// the next customer.
+const RESTART_SECONDS = 60
+const restartSeconds = ref(RESTART_SECONDS)
+let restartInterval: number | undefined
+
+// Kept so "Reenviar ticket" can come back with the number already typed.
+const lastTicketPhone = ref('')
+
+function stopRestartCountdown(): void {
+  window.clearInterval(restartInterval)
+  restartInterval = undefined
+}
+
+function startRestartCountdown(): void {
+  stopRestartCountdown()
+  restartSeconds.value = RESTART_SECONDS
+  restartInterval = window.setInterval(() => {
+    restartSeconds.value -= 1
+    if (restartSeconds.value <= 0) {
+      stopRestartCountdown()
+      router.push('/')
+    }
+  }, 1000)
+}
+
+function finishPurchase(phone: string): void {
+  lastTicketPhone.value = phone
+  step.value = 'thanks'
+  startRestartCountdown()
+}
+
+// Going back stops the countdown: the customer is interacting again, so the
+// terminal must not yank the screen away mid-flight. Coming back to the
+// thank-you screen starts a fresh full countdown.
+function resendTicket(): void {
+  stopRestartCountdown()
+  step.value = 'receipt'
+}
+
+onBeforeUnmount(stopRestartCountdown)
+
 const currentAmount = computed(() => {
-  if ((step.value === 'qr-split' || step.value === 'generating' || step.value === 'verifying' || step.value === 'error') && splitCount.value)
+  if ((step.value === 'qr-split' || step.value === 'generating' || step.value === 'verifying' || step.value === 'error') && splitCount.value) {
+    // Item-based split: each QR charges its own cart. Fallback to equal split
+    // when there is no assignment (e.g. legacy state).
+    if (splitAmounts.value.length === 2 && (splitCartA.value.length > 0 || splitCartB.value.length > 0))
+      return splitAmounts.value[currentQr.value - 1] ?? cartTotal.value
     return splitAmount(splitCount.value)
+  }
   return cartTotal.value
 })
 
-const qrLabel = computed(() => {
-  if (step.value === 'qr-split' && splitCount.value)
-    return `Escanear QR ${currentQr.value} de ${splitCount.value}`
-  return 'Escanear QR'
-})
+// const qrLabel = computed(() => {
+//   if (step.value === 'qr-split' && splitCount.value)
+//     return `Escanear QR ${currentQr.value} de ${splitCount.value} o pagar con NFC / débito / crédito`
+//   return 'Escanear QR o pagar con NFC / débito / crédito'
+// })
 
 function goModality(): void {
   step.value = 'modality'
@@ -165,13 +304,14 @@ function goSingleQr(): void {
 }
 
 function goSplitSelect(): void {
-  splitCount.value = null
+  initSplitCarts()
   step.value = 'split'
 }
 
 function startSplit(): void {
-  if (!splitCount.value)
+  if (!canStartSplit.value)
     return
+  splitCount.value = 2
   previousQrStep.value = 'qr-split'
   currentQr.value = 1
   paidCount.value = 0
@@ -184,10 +324,11 @@ function simulateQrPaid(): void {
     paidCount.value += 1
     const isSingle = previousQrStep.value === 'qr-single'
     if (isSingle) {
+      snapshotReceipt(true)
       clearCart()
       step.value = 'success'
       window.setTimeout(() => {
-        step.value = 'rating'
+        step.value = 'receipt'
       }, 1600)
       return
     }
@@ -198,10 +339,11 @@ function simulateQrPaid(): void {
         step.value = 'qr-split'
       }
       else {
+        snapshotReceipt(false)
         clearCart()
         step.value = 'success'
         window.setTimeout(() => {
-          step.value = 'rating'
+          step.value = 'receipt'
         }, 1600)
       }
     }, 1400)
@@ -220,10 +362,12 @@ function retryQr(): void {
   step.value = previousQrStep.value
 }
 
-function backToTotal(): void {
-  step.value = 'total'
-  splitCount.value = null
-}
+// function backToTotal(): void {
+//   step.value = 'total'
+//   splitCount.value = null
+//   splitCartA.value = []
+//   splitCartB.value = []
+// }
 
 function backToModality(): void {
   step.value = 'modality'
@@ -239,24 +383,13 @@ function backToModality(): void {
 //   })
 // }
 
-const email = ref('')
-const emailSent = ref(false)
-const emailError = ref('')
-
-function sendReceipt(): void {
-  const value = email.value.trim()
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-    emailError.value = 'Ingresá un mail válido'
-    emailSent.value = false
-    return
-  }
-  emailError.value = ''
-  emailSent.value = true
-}
 </script>
 
 <template>
-  <div class="flex min-h-screen flex-col items-center bg-neutral-200 p-6 text-black">
+  <div
+    class="flex min-h-screen flex-col items-center text-black"
+    :class="step === 'receipt' ? 'bg-[#E2E4E8]' : 'bg-neutral-200 p-6'"
+  >
     <!-- Total -->
     <section
       v-if="step === 'total'"
@@ -362,72 +495,188 @@ function sendReceipt(): void {
       class="flex w-full max-w-5xl flex-1 flex-col justify-center gap-10"
     >
       <h1 class="text-center text-3xl font-bold">
-        Seleccionar modalidad de pago
+        Seleccionar como desea pagar
       </h1>
-      <div class="flex flex-col gap-4 md:flex-row">
-        <UButton
-          variant="outline"
-          color="neutral"
-          size="xl"
-          block
-          class=" px-6 text-2xl flex-col flex flex-1 items-center justify-center  h-64 rounded-2xl font-bold w-64"
-          @click="goSingleQr"
-        >
-          Pago con QR
-        </UButton>
-        <UButton
-          variant="outline"
-          color="neutral"
-          size="xl"
-          block
-          class=" px-6 flex-col flex flex-1 items-center justify-center  h-64 rounded-2xl font-bold w-64"
-          @click="goSplitSelect"
-        >
-          <span class="text-2xl">Pago dividido con QR</span>
-          <span>Máximo 4 personas</span>
-        </UButton>
+
+      <div class="grid items-start gap-8 md:grid-cols-[minmax(0,480px)_1fr]">
+        <!-- Left: bank promotions of the day -->
+        <BankPromotionsCard />
+
+        <!-- Right: compact modality actions -->
+        <div class="flex w-full max-w-xl flex-col gap-4 justify-self-end">
+          <p class="text-xl font-bold">
+            Total a pagar
+          </p>
+          <p class="text-7xl font-bold text-green-600">
+            {{ formatPrice(cartTotal) }}
+          </p>
+          <p>Los descuentos se aplicarán luego del pago por su entidad bancaria</p>
+          <UButton
+            variant="outline"
+            color="neutral"
+            size="xl"
+            block
+            class="h-20 w-full rounded-2xl text-xl font-bold"
+            @click="goSingleQr"
+          >
+            Pago individual
+          </UButton>
+          <UButton
+            variant="solid"
+            color="neutral"
+            size="xl"
+            block
+            class="h-20 w-full flex-col rounded-2xl font-bold border-4"
+            @click="goSplitSelect"
+          >
+            <span class="text-xl">Pago dividido (2 personas)</span>
+          </UButton>
+        </div>
       </div>
-      <div>
-        <UButton
-          variant="outline"
-          color="neutral"
-          size="xl"
-          block
-          class="h-18 w-64 px-6 rounded-2xl font-bold"
-          label="Volver atras"
-          @click="backToTotal"
-        />
-      </div>
+      <UButton
+        variant="outline"
+        color="neutral"
+        size="xl"
+        block
+        class="h-18 w-64 rounded-2xl font-bold"
+        label="Volver atras"
+        to="/carrito"
+      />
     </section>
 
-    <!-- Split select -->
+    <!-- Split select: 2 people, 2 carts -->
     <section
       v-if="step === 'split'"
-      class="flex w-full max-w-5xl flex-1 flex-col justify-center gap-2"
+      class="flex w-full max-w-6xl flex-1 flex-col justify-center gap-2"
     >
       <h1 class="text-center text-lg font-bold">
-        Pago dividido. Máximo 4 personas.
+        Pago dividido · 2 personas
       </h1>
-      <h2 class="text-center text-3xl max-w-2xl my-6 mx-auto font-bold">
-        Seleccione en cuanto quiere dividir el pago y haga click en generar QR.
+      <h2 class="mx-auto mt-2 max-w-2xl text-center text-2xl font-bold">
+        Pasá items de un lado al otro y después comenzá a pagar.
       </h2>
-      <div class="flex flex-col gap-4 md:flex-row">
-        <UButton
-          v-for="n in ([2, 3, 4] as const)"
-          :key="n"
-          variant="outline"
-          color="neutral"
-          size="xl"
-          block
-          class=" px-6 flex-col flex flex-1 items-center justify-center  h-64 rounded-2xl font-bold w-64"
-          :class="splitCount === n ? ' bg-green-500! text-green-900 ' : ''"
-          @click="splitCount = n"
-        >
-          <span class="text-6xl">{{ n }}</span>
-          <span>{{ formatPrice(splitAmount(n)) }}</span>
-        </UButton>
+      <p
+        
+        class="text-center text-sm font-semibold text-red-600 h-9"
+      >
+        <span v-if="!canStartSplit">Cada persona tiene que tener al menos un item.</span>
+      </p>
+      <div class="grid items-start gap-4 md:grid-cols-2">
+        <!-- Cart A -->
+        <div class="overflow-hidden rounded-2xl border border-neutral-200 bg-white text-left">
+          <div class="flex items-center justify-between border-b border-neutral-200 px-4 py-3">
+            <p class="text-lg font-bold">
+              Persona 1 ({{ splitCartA.length }})
+            </p>
+            <p class="text-lg font-bold text-green-600">
+              {{ formatPrice(splitTotalA) }}
+            </p>
+          </div>
+          <div class="max-h-72 min-h-72 overflow-y-auto">
+            <div
+              v-for="product in splitCartA"
+              :key="product.id"
+              class="flex items-center gap-3 border-b border-neutral-100 p-3 last:border-b-0"
+            >
+              <div class="min-w-0 flex-1">
+                <p class="truncate text-base font-bold">
+                  {{ product.name }}
+                </p>
+                <p class="text-sm text-neutral-500">
+                  {{ formatPrice(product.unitPrice) }} c/u · x{{ product.quantity }} · {{ formatPrice(lineTotal(product)) }}
+                </p>
+              </div>
+              <UButton
+                color="neutral"
+                variant="outline"
+                size="md"
+                class="shrink-0 rounded-xl font-bold"
+                label="Pasar →"
+                @click="moveUnit(product.id, 'A')"
+              />
+            </div>
+            <p
+              v-if="splitCartA.length === 0"
+              class="p-6 text-center text-sm text-neutral-500"
+            >
+              Sin items — pasá algo desde el otro lado
+            </p>
+          </div>
+          <!-- <div class="flex items-center justify-between bg-neutral-50 px-4 py-3">
+            <span class="text-sm font-semibold">Total Persona 1</span>
+            <span class="font-bold text-green-600">{{ formatPrice(splitTotalA) }}</span>
+          </div> -->
+        </div>
+        <!-- Cart B -->
+        <div class="overflow-hidden rounded-2xl border border-neutral-200 bg-white text-left">
+          <div class="flex items-center justify-between border-b border-neutral-200 px-4 py-3">
+            <p class="text-lg font-bold">
+              Persona 2 ({{ splitCartB.length }})
+            </p>
+            <p class="text-lg font-bold text-green-600">
+              {{ formatPrice(splitTotalB) }}
+            </p>
+          </div>
+          <div class="max-h-72 min-h-72 overflow-y-auto">
+            <div
+              v-for="product in splitCartB"
+              :key="product.id"
+              class="flex items-center gap-3 border-b border-neutral-100 p-3 last:border-b-0"
+            >
+              <UButton
+                color="neutral"
+                variant="outline"
+                size="md"
+                class="shrink-0 rounded-xl font-bold"
+                label="← Pasar"
+                @click="moveUnit(product.id, 'B')"
+              />
+              <div class="min-w-0 flex-1 text-right">
+                <p class="truncate text-base font-bold">
+                  {{ product.name }}
+                </p>
+                <p class="text-sm text-neutral-500">
+                  {{ formatPrice(product.unitPrice) }} c/u · x{{ product.quantity }} · {{ formatPrice(lineTotal(product)) }}
+                </p>
+              </div>
+            </div>
+            <p
+              v-if="splitCartB.length === 0"
+              class="p-6 text-center text-sm text-neutral-500"
+            >
+              Sin items — pasá algo desde el otro lado
+            </p>
+          </div>
+          <!-- <div class="flex items-center justify-between bg-neutral-50 px-4 py-3">
+            <span class="text-sm font-semibold">Total Persona 2</span>
+            <span class="font-bold text-green-600">{{ formatPrice(splitTotalB) }}</span>
+          </div> -->
+        </div>
       </div>
-      <div class="flex flex-col gap-4 mt-6 sm:flex-row sm:justify-between">
+      <div class="flex flex-col items-center justify-between gap-2 sm:flex-row">
+        <div class="flex justify-center items-center w-full gap-6">
+          <UButton
+            variant="outline"
+            color="neutral"
+            size="md"
+            class="rounded-xl font-bold"
+            label="← Pasar todo"
+            :disabled="splitCartB.length === 0"
+            @click="moveAll('B')"
+          />
+           <UButton
+            variant="outline"
+            color="neutral"
+            size="md"
+            class="rounded-xl font-bold"
+            label="Pasar todo →"
+            :disabled="splitCartA.length === 0"
+            @click="moveAll('A')"
+          />
+        </div>
+      </div>
+      
+      <div class="mt-2 flex flex-col gap-4 sm:flex-row sm:justify-between items-center">
         <UButton
           variant="outline"
           color="neutral"
@@ -437,14 +686,17 @@ function sendReceipt(): void {
           label="Volver atras"
           @click="backToModality"
         />
+        <p class="text-2xl font-semibold text-emerald-600">
+          Total a pagar: {{ formatPrice(cartTotal) }}
+          <!-- · Persona 1: {{ formatPrice(splitTotalA) }} · Persona 2: {{ formatPrice(splitTotalB) }} -->
+        </p>
         <UButton
-          :variant="splitCount ? 'solid' : 'solid'"
-          :color="splitCount ? 'success' : 'neutral'"
+          :color="canStartSplit ? 'success' : 'neutral'"
           size="xl"
           block
           class="h-18 w-64 px-6 rounded-2xl font-bold"
-          label="Generar QRs"
-          :disabled="!splitCount"
+          label="Comenzar a pagar"
+          :disabled="!canStartSplit"
           @click="startSplit"
         />
       </div>
@@ -455,9 +707,18 @@ function sendReceipt(): void {
       v-if="step === 'qr-single' || step === 'qr-split'"
       class="flex w-full max-w-2xl flex-1 flex-col items-center justify-center gap-4 text-center"
     >
-      <h1 class="text-3xl font-bold">
+      <p class="text-3xl">
+        {{ step === 'qr-split' ? `Persona ${currentQr} va a pagar ${formatPrice(currentAmount)}` : `Vas a pagar ${formatPrice(currentAmount)}` }}
+      </p>
+      <p
+        v-if="step === 'qr-split'"
+        class="text-sm font-semibold text-neutral-600"
+      >
+        Persona 1: {{ formatPrice(splitTotalA) }} · Persona 2: {{ formatPrice(splitTotalB) }}
+      </p>
+      <!-- <h1 class="text-3xl font-bold">
         {{ qrLabel }}
-      </h1>
+      </h1> -->
       <div
         v-if="step === 'qr-split' && splitCount"
         class="flex gap-2"
@@ -469,9 +730,7 @@ function sendReceipt(): void {
           :class="i < currentQr || (i === currentQr && paidCount >= i) ? 'bg-green-600' : i === currentQr ? 'bg-black' : 'bg-neutral-400'"
         />
       </div>
-      <p class="text-3xl">
-        {{ formatPrice(currentAmount) }}
-      </p>
+      
       <div class="flex flex-col h-80 w-80 items-center justify-center bg-neutral-100">
         <UIcon
           name="i-lucide-qr-code"
@@ -495,6 +754,17 @@ function sendReceipt(): void {
       <!-- <p class="text-sm text-neutral-600">
         Mock: acercá el lector o simulá el resultado
       </p> -->
+      <!-- The terminal takes QR and contactless, so both instructions stay visible. -->
+      <div class="flex w-full items-center gap-3 max-w-md rounded-2xl border border-neutral-300 bg-white px-5 py-4 text-left">
+        <UIcon
+          name="i-lucide-nfc"
+          class="size-8 shrink-0 text-neutral-700"
+        />
+        <p class="text-base font-semibold text-neutral-800">
+          Acercá tu tarjeta de débito/crédito o tu celular para pagar por NFC
+        </p>
+      </div>
+
       <UButton
         v-if="step === 'qr-single' || (step === 'qr-split' && paidCount === 0 && currentQr === 1)"
         variant="outline"
@@ -618,72 +888,54 @@ function sendReceipt(): void {
       </div>
     </section>
 
-    <!-- Rating -->
+    <!-- Thank you / self restart for the next customer -->
     <section
-      v-if="step === 'rating'"
-      class="flex w-full max-w-2xl flex-1 flex-col items-center justify-center gap-6 text-center"
+      v-if="step === 'thanks'"
+      class="flex w-full max-w-2xl flex-1 flex-col items-center justify-center gap-8 text-center"
     >
       <UIcon
-        name="i-lucide-shopping-bag"
-        class="size-20"
+        name="i-lucide-check-circle-2"
+        class="size-24 text-green-600"
       />
-      <h1 class="text-3xl font-bold">
-        Gracias por su compra
-      </h1>
-      <div class="flex w-full max-w-md flex-col gap-3">
-        <p class="font-semibold">
-          ¿Querés que te enviemos el comprobante por mail?
+      <div class="flex flex-col gap-2">
+        <h1 class="text-4xl font-bold">
+          ¡Gracias por tu compra!
+        </h1>
+        <p class="text-lg text-neutral-600">
+          Te esperamos la próxima.
         </p>
-        <div class="flex justify-start hover:bg-gray-200 rounded-full w-full outline-4 outline-offset-2! focus-within:outline-blue-600 outline-neutral-950 h-12 items-center">
-          <div class="w-10 flex justify-center items-center">
-            <UIcon name="i-lucide-mail" />
-          </div>
-          <input
-            v-model="email"
-            type="email"
-            placeholder="tu@mail.com"
-            aria-label="Mail para enviar el comprobante"
-            class="w-full outline-0 bg-transparent"
-          >
-        </div>
         <UButton
-          color="success"
+          variant="outline"
+          color="neutral"
           size="xl"
           block
-          label="Enviar comprobante"
-          @click="sendReceipt"
+          class="h-18 w-64 mx-auto rounded-2xl font-bold"
+          label="Reenviar ticket"
+          @click="resendTicket"
         />
-        <p
-          v-if="emailError"
-          class="text-sm font-semibold text-red-600"
-        >
-          {{ emailError }}
-        </p>
-        <p
-          v-if="emailSent"
-          class="text-sm font-semibold text-green-600"
-        >
-          Comprobante enviado a {{ email.trim() }}
-        </p>
       </div>
-      <!-- <p class="font-semibold">
-        ¿Como calificarias esta experiencia de compra?
-      </p>
-      <div class="flex gap-3">
+      <div class="flex items-center gap-4 rounded-2xl border border-neutral-300 bg-white px-6 py-4">
+        <span class="text-4xl font-bold tabular-nums">{{ restartSeconds }}</span>
+        <p class="max-w-56 text-left text-sm font-semibold text-neutral-700">
+          El chango se va a reiniciar automáticamente
+        </p>
         <UButton
-          v-for="n in 5"
-          :key="n"
-          class="size-12 text-center p-0 justify-center font-bold"
-          :color="rating === n ?'success' : 'neutral'"
-          :label="String(n)"
-          @click="selectRating(n)"
+          class="bg-black px-8 font-bold text-white"
+          label="Cerrar sesión"
+          to="/"
         />
-      </div> -->
-      <UButton
-        to="/"
-        class="bg-black px-12 font-semibold text-white"
-        label="Finalizar compra"
-      />
+      </div>
     </section>
+
+    <!-- Ticket delivery -->
+    <TicketWhatsapp
+      v-if="step === 'receipt'"
+      :total="receiptTotal"
+      :parts="receiptParts"
+      :amount-per-part="receiptAmountPerPart"
+      :amounts="receiptAmounts"
+      :initial-phone="lastTicketPhone"
+      @finish="finishPurchase"
+    />
   </div>
 </template>

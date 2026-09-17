@@ -25,6 +25,8 @@ export interface BankPromotion {
   noteStyle?: PromotionNoteStyle
   /** Right-hand highlight: the discount or benefit itself. */
   value: string
+  /** Numeric discount (e.g. 25 for "25%"). Used to compute the final price. */
+  discountPercent?: number
   /** Overrides the default emerald colour of `value`. */
   valueClass?: string
 }
@@ -49,6 +51,7 @@ export const promotionGroups: PromotionGroup[] = [
         note: 'Tope $15.000',
         noteStyle: 'tag',
         value: '25%',
+        discountPercent: 25,
       },
       // {
       //   id: 2,
@@ -78,6 +81,7 @@ export const promotionGroups: PromotionGroup[] = [
         detail: 'Martes y miércoles · Santander Río',
         note: 'Requiere registro previo',
         value: '15%',
+        discountPercent: 15,
       },
       {
         id: 5,
@@ -86,6 +90,7 @@ export const promotionGroups: PromotionGroup[] = [
         name: 'BBVA',
         detail: 'Lunes y martes · Tarjeta de débito',
         value: '20%',
+        discountPercent: 20,
       },
       // {
       //   id: 6,
@@ -110,6 +115,7 @@ export const promotionGroups: PromotionGroup[] = [
         name: 'Mercado Pago',
         detail: 'Todos los días · Dinero en cuenta',
         value: '10%',
+        discountPercent: 10,
       },
       // {
       //   id: 8,

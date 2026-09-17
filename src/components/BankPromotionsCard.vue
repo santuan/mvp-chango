@@ -2,6 +2,59 @@
 // Dumb renderer for the promotions of the day. The data lives in
 // data/promotions.ts and already carries its own presentational classes.
 import { promotionGroups } from '../data/promotions'
+import type { BankPromotion } from '../data/promotions'
+import { useCart } from '../composables/useCart'
+
+const { cartTotal } = useCart()
+
+function getDiscountPercent(promo: BankPromotion): number | null {
+  if (typeof promo.discountPercent === 'number')
+    return promo.discountPercent
+  const match = /(\d+(?:[.,]\d+)?)\s*%/.exec(promo.value ?? '')
+  if (!match)
+    return null
+  return Number(match[1].replace(',', '.'))
+}
+
+function getCap(promo: BankPromotion): number | null {
+  if (!promo.note)
+    return null
+  const match = /tope\s*\$\s*([\d.]+)/i.exec(promo.note)
+  if (!match)
+    return null
+  return Number(match[1].replace(/\./g, ''))
+}
+
+function finalPrice(promo: BankPromotion): number | null {
+  const percent = getDiscountPercent(promo)
+  if (percent == null)
+    return null
+  const total = cartTotal.value
+  let discount = total * (percent / 100)
+  const cap = getCap(promo)
+  if (cap != null)
+    discount = Math.min(discount, cap)
+  return Math.round(total - discount)
+}
+
+function formatPrice(value: number): string {
+  return `$${value.toLocaleString('es-AR')}`
+}
+
+function displayName(promo: BankPromotion): string {
+  const percent = getDiscountPercent(promo)
+  if (percent == null)
+    return promo.name
+  const label = promo.value.includes('%') ? promo.value.trim() : `${String(percent).replace('.', ',')}%`
+  return `${label} con ${promo.name}`
+}
+
+function displayValue(promo: BankPromotion): string {
+  const price = finalPrice(promo)
+  if (price == null)
+    return promo.value
+  return formatPrice(price)
+}
 </script>
 
 <template>
@@ -32,7 +85,7 @@ import { promotionGroups } from '../data/promotions'
             </div>
             <div class="flex flex-col gap-px pl-3.5">
               <p class=" font-bold text-slate-900">
-                {{ promo.name }}
+                {{ displayName(promo) }}
               </p>
               <p class="text-[11px] text-slate-500">
                 {{ promo.detail }}
@@ -52,10 +105,11 @@ import { promotionGroups } from '../data/promotions'
             </div>
           </div>
           <p
-            class="shrink-0 pl-2  font-bold"
+            class="shrink-0 pl-2 text-right  font-bold"
             :class="promo.valueClass ?? 'text-emerald-700'"
           >
-            {{ promo.value }}
+            {{ displayValue(promo) }} <br>
+            <span class="text-xs text-black">Total con descuento</span>
           </p>
         </div>
       </div>
