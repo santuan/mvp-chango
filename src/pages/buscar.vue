@@ -11,7 +11,7 @@ const { openScan, checkoutModalOpen } = useCartModals()
 const searchQuery = ref('')
 const page = ref(1)
 const perPage = 12
-const view = ref<'categories' | 'products' | 'product'>('categories')
+const view = ref<'categories' | 'products' | 'product' | 'mapa'>('categories')
 const selectedCategory = ref<Category | null>(null)
 const selectedProduct = ref<Product | null>(null)
 
@@ -111,6 +111,14 @@ function openCategory(category: Category): void {
 
 function openProduct(product: Product): void {
   selectedProduct.value = product
+  view.value = 'product'
+}
+
+function openMap(): void {
+  view.value = 'mapa'
+}
+
+function backToProduct(): void {
   view.value = 'product'
 }
 
@@ -412,8 +420,18 @@ function resetSearch(): void {
               >
                 En {{ selectedCategory.name }}
               </p> -->
-              <div>
+              <div class="flex flex-wrap gap-3">
+               
                 <UButton
+                  label="Ver en mapa"
+                  icon="i-lucide-map"
+                  variant="outline"
+                  color="neutral"
+                  size="xl"
+                  class="h-18 px-6 rounded-2xl font-bold"
+                  @click="openMap"
+                />
+                 <UButton
                   label="Guiarme al producto en la gondola"
                   icon="i-lucide-navigation"
                   variant="outline"
@@ -471,6 +489,41 @@ function resetSearch(): void {
               />
               <span class="text-sm">{{ related.name }}</span>
             </button> -->
+          </div>
+        </div>
+
+        <!-- Map view -->
+        <div v-if="view === 'mapa'">
+          <UButton
+            variant="outline"
+            color="neutral"
+            size="xl"
+            active-class="opacity-50!"
+            class="h-18 rounded-2xl px-6 font-bold"
+            icon="i-lucide-arrow-left"
+            label="Cerrar mapa"
+            @click="backToProduct"
+          />
+          <div class="flex flex-col gap-4 pt-4">
+            <div>
+              <h1 class="text-2xl text-center font-bold">
+                Ubicación {{ selectedProduct?.name }}
+              </h1>
+              <!-- <p
+                v-if="selectedCategory"
+                class="text-lg text-neutral-500"
+              >
+                En {{ selectedCategory.name }}
+              </p> -->
+            </div>
+            <img
+              src="/mapa.jpg"
+              alt="Mapa del local con ubicación del producto"
+              class="w-full max-w-3xl mx-auto rounded-2xl border border-neutral-200"
+            >
+            <p class="text-sm text-center text-neutral-500">
+              Ubicación orientativa del producto en el plano.
+            </p>
           </div>
         </div>
       </section>
