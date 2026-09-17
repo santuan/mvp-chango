@@ -521,9 +521,9 @@ function resetSearch(): void {
               alt="Mapa del local con ubicación del producto"
               class="w-full max-w-3xl mx-auto rounded-2xl border border-neutral-200"
             >
-            <p class="text-sm text-center text-neutral-500">
+            <!-- <p class="text-sm text-center text-neutral-500">
               Ubicación orientativa del producto en el plano.
-            </p>
+            </p> -->
           </div>
         </div>
       </section>
