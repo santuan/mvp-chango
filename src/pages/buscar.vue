@@ -2,120 +2,11 @@
 import { computed, ref } from 'vue'
 import { useCart } from '../composables/useCart'
 import { useCartModals } from '../composables/useCartModals'
+import { categories, finalPrice, findProduct, products, productsOf } from '../data/catalog'
+import type { Category, Product } from '../data/catalog'
 
 const { subtotal, saving, cartTotal, totalItems, totalProducts } = useCart()
 const { openScan, checkoutModalOpen } = useCartModals()
-
-interface Category {
-  id: number
-  name: string
-}
-
-// 15 total, 12 per page mock
-const allCategories = ref<Category[]>([
-  { id: 1, name: 'Lácteos' },
-  { id: 2, name: 'Panadería' },
-  { id: 3, name: 'Huevos' },
-  { id: 4, name: 'Aceites y Vinagres' },
-  { id: 5, name: 'Arroz y Legumbres' },
-  { id: 6, name: 'Pastas' },
-  { id: 7, name: 'Azúcar y Endulzantes' },
-  { id: 8, name: 'Yerba y Café' },
-  { id: 9, name: 'Gaseosas' },
-  { id: 10, name: 'Aguas' },
-  { id: 11, name: 'Cervezas y Vinos' },
-  { id: 12, name: 'Limpieza' },
-  { id: 13, name: 'Higiene Personal' },
-  { id: 14, name: 'Carnes' },
-  { id: 15, name: 'Frutas y Verduras' },
-])
-
-interface Product {
-  id: number
-  name: string
-  categoryId: number
-  price: number
-  originalPrice: number
-  discount?: number
-}
-
-const allProducts = ref<Product[]>([
-  // Lácteos
-  { id: 1, name: 'Leche entera 1L', categoryId: 1, price: 1200, originalPrice: 1200 },
-  { id: 2, name: 'Leche descremada 1L', categoryId: 1, price: 1300, originalPrice: 1300 },
-  { id: 3, name: 'Manteca 200g', categoryId: 1, price: 2400, originalPrice: 2400 },
-  { id: 4, name: 'Queso cremoso 500g', categoryId: 1, price: 6800, originalPrice: 6800 },
-  { id: 5, name: 'YogurNatural x4', categoryId: 1, price: 3200, originalPrice: 3200 },
-  { id: 6, name: 'Queso rallado 250g', categoryId: 1, price: 4500, originalPrice: 4500 },
-  // Panadería
-  { id: 7, name: 'Pan lactal', categoryId: 2, price: 2800, originalPrice: 2800 },
-  { id: 8, name: 'Pan francés x12', categoryId: 2, price: 2400, originalPrice: 2400 },
-  { id: 9, name: 'Medialunas x6', categoryId: 2, price: 5200, originalPrice: 5200 },
-  { id: 10, name: 'Facturas x6', categoryId: 2, price: 5800, originalPrice: 5800 },
-  // Huevos
-  { id: 11, name: 'Huevos x12', categoryId: 3, price: 2800, originalPrice: 3500, discount: 20 },
-  { id: 12, name: 'Huevos x6', categoryId: 3, price: 1600, originalPrice: 1600 },
-  { id: 13, name: 'Huevos blancos x12', categoryId: 3, price: 3000, originalPrice: 3000 },
-  // Aceites y Vinagres
-  { id: 14, name: 'Aceite de oliva 500ml', categoryId: 4, price: 8500, originalPrice: 8500 },
-  { id: 15, name: 'Aceite de girasol 1L', categoryId: 4, price: 5200, originalPrice: 5200 },
-  { id: 16, name: 'Vinagre de manzana 500ml', categoryId: 4, price: 3800, originalPrice: 3800 },
-  { id: 17, name: 'Aceite de maíz 1L', categoryId: 4, price: 5600, originalPrice: 5600 },
-  // Arroz y Legumbres
-  { id: 18, name: 'Arroz 1kg', categoryId: 5, price: 1600, originalPrice: 1600 },
-  { id: 19, name: 'Frijoles 500g', categoryId: 5, price: 2200, originalPrice: 2200 },
-  { id: 20, name: 'Lentejas 500g', categoryId: 5, price: 2100, originalPrice: 2100 },
-  { id: 21, name: 'Garbanzos 500g', categoryId: 5, price: 3400, originalPrice: 3400 },
-  // Pastas
-  { id: 22, name: 'Fideos 500g', categoryId: 6, price: 1400, originalPrice: 1400 },
-  { id: 23, name: 'Spaghetti 500g', categoryId: 6, price: 1500, originalPrice: 1500 },
-  { id: 24, name: 'Ñoquis 500g', categoryId: 6, price: 2800, originalPrice: 2800 },
-  { id: 25, name: 'Ravioles 500g', categoryId: 6, price: 4200, originalPrice: 4200 },
-  // Azúcar y Endulzantes
-  { id: 26, name: 'Azúcar 1kg', categoryId: 7, price: 1800, originalPrice: 1800 },
-  { id: 27, name: 'Endulzante x100', categoryId: 7, price: 1200, originalPrice: 1200 },
-  { id: 28, name: 'Miel 500g', categoryId: 7, price: 12500, originalPrice: 12500 },
-  // Yerba y Café
-  { id: 29, name: 'Yerba mate 500g', categoryId: 8, price: 3360, originalPrice: 4200, discount: 20 },
-  { id: 30, name: 'Café molido 250g', categoryId: 8, price: 7500, originalPrice: 7500 },
-  { id: 31, name: 'Café instantáneo 100g', categoryId: 8, price: 8200, originalPrice: 8200 },
-  { id: 32, name: 'Té negro x24', categoryId: 8, price: 2100, originalPrice: 2100 },
-  // Gaseosas
-  { id: 33, name: 'Gaseosa 2.25L', categoryId: 9, price: 3200, originalPrice: 3200 },
-  { id: 34, name: 'Gaseosa 500ml', categoryId: 9, price: 1600, originalPrice: 1600 },
-  { id: 35, name: 'Jugo en polvo x10', categoryId: 9, price: 1800, originalPrice: 1800 },
-  { id: 36, name: 'Agua saborizada 500ml', categoryId: 9, price: 1400, originalPrice: 1400 },
-  // Aguas
-  { id: 37, name: 'Agua mineral 2L', categoryId: 10, price: 1100, originalPrice: 1100 },
-  { id: 38, name: 'Agua mineral 500ml', categoryId: 10, price: 800, originalPrice: 800 },
-  { id: 39, name: 'Agua saborizada 1L', categoryId: 10, price: 1900, originalPrice: 1900 },
-  // Cervezas y Vinos
-  { id: 40, name: 'Cerveza x6', categoryId: 11, price: 4640, originalPrice: 5800, discount: 20 },
-  { id: 41, name: 'Cerveza artesanal x3', categoryId: 11, price: 4200, originalPrice: 4200 },
-  { id: 42, name: 'Vino tinto 750ml', categoryId: 11, price: 6500, originalPrice: 6500 },
-  { id: 43, name: 'Vino blanco 750ml', categoryId: 11, price: 5800, originalPrice: 5800 },
-  // Limpieza
-  { id: 44, name: 'Detergente 1L', categoryId: 12, price: 3800, originalPrice: 3800 },
-  { id: 45, name: 'Lavandina 1L', categoryId: 12, price: 1200, originalPrice: 1200 },
-  { id: 46, name: 'Jabón en polvo 800g', categoryId: 12, price: 4200, originalPrice: 4200 },
-  { id: 47, name: 'Esponjas x3', categoryId: 12, price: 1500, originalPrice: 1500 },
-  // Higiene Personal
-  { id: 48, name: 'Jabón en barra', categoryId: 13, price: 900, originalPrice: 900 },
-  { id: 49, name: 'Shampoo 400ml', categoryId: 13, price: 5200, originalPrice: 5200 },
-  { id: 50, name: 'Pasta dental 90g', categoryId: 13, price: 3400, originalPrice: 3400 },
-  { id: 51, name: 'Papel higiene x4', categoryId: 13, price: 4500, originalPrice: 4500 },
-  // Carnes
-  { id: 52, name: 'Bondiola 1kg', categoryId: 14, price: 9600, originalPrice: 12000, discount: 20 },
-  { id: 53, name: 'Pechuga de pollo 1kg', categoryId: 14, price: 7200, originalPrice: 7200 },
-  { id: 54, name: 'Carne picada 1kg', categoryId: 14, price: 8400, originalPrice: 8400 },
-  { id: 55, name: 'Chorizo x6', categoryId: 14, price: 5600, originalPrice: 5600 },
-  // Frutas y Verduras
-  { id: 56, name: 'Banana 1kg', categoryId: 15, price: 1500, originalPrice: 1500 },
-  { id: 57, name: 'Manzana 1kg', categoryId: 15, price: 2200, originalPrice: 2200 },
-  { id: 58, name: 'Tomate 1kg', categoryId: 15, price: 1800, originalPrice: 1800 },
-  { id: 59, name: 'Cebolla 1kg', categoryId: 15, price: 1200, originalPrice: 1200 },
-  { id: 60, name: 'Papa 1kg', categoryId: 15, price: 1600, originalPrice: 1600 },
-])
 
 const searchQuery = ref('')
 const page = ref(1)
@@ -129,7 +20,7 @@ const selectedProduct = ref<Product | null>(null)
 const isSearching = computed(() => searchQuery.value.trim().length > 0)
 
 function categoryName(id: number): string {
-  return allCategories.value.find(c => c.id === id)?.name ?? ''
+  return categories.find(c => c.id === id)?.name ?? ''
 }
 
 // CommandPalette group: every product as a fuzzy-searchable item.
@@ -139,12 +30,12 @@ const paletteGroups = computed(() => [
   {
     id: 'products',
     label: 'Productos',
-    items: allProducts.value.map(p => ({
+    items: products.map(p => ({
       productId: p.id,
       label: p.name,
       category: categoryName(p.categoryId),
       description: `En ${categoryName(p.categoryId)}`,
-      suffix: formatPrice(p.price),
+      suffix: formatPrice(finalPrice(p)),
       icon: 'i-lucide-shopping-bag',
     })),
   },
@@ -164,23 +55,23 @@ function onSelectPaletteItem(value: { productId?: number; [key: string]: unknown
   const id = value?.productId as number | undefined
   if (!id)
     return
-  const product = allProducts.value.find(p => p.id === id)
+  const product = findProduct(id)
   if (!product)
     return
-  selectedCategory.value = allCategories.value.find(c => c.id === product.categoryId) ?? null
+  selectedCategory.value = categories.find(c => c.id === product.categoryId) ?? null
   openProduct(product)
 }
 
 const productsInCategory = computed(() => {
   if (!selectedCategory.value) return []
-  return allProducts.value.filter(p => p.categoryId === selectedCategory.value!.id)
+  return productsOf(selectedCategory.value)
 })
 
 const selectedProductData = computed(() => selectedProduct.value)
 
 const relatedProducts = computed(() => {
   if (!selectedProduct.value) return []
-  return allProducts.value
+  return products
     .filter(p => p.categoryId === selectedProduct.value!.categoryId && p.id !== selectedProduct.value!.id)
     .slice(0, 3)
 })
@@ -188,8 +79,8 @@ const relatedProducts = computed(() => {
 const filtered = computed(() => {
   const q = searchQuery.value.trim().toLowerCase()
   if (!q)
-    return allCategories.value
-  return allCategories.value.filter(c => c.name.toLowerCase().includes(q))
+    return categories
+  return categories.filter(c => c.name.toLowerCase().includes(q))
 })
 
 const totalPages = computed(() => Math.max(1, Math.ceil(filtered.value.length / perPage)))
@@ -424,7 +315,7 @@ function resetSearch(): void {
             </div>
           </div>
           
-          <div class="max-h-[calc(100vh-20rem)] p-2 min-h-[calc(100vh-20rem)] overflow-y-auto mt-4">
+          <div class="max-h-[calc(100vh-17rem)] p-2 min-h-[calc(100vh-17rem)] overflow-y-auto mt-4">
             <div class="grid grid-cols-2 gap-2 md:grid-cols-2 xl:grid-cols-3 place-content-start">
               <UButton
                 v-for="product in productsInCategory"
@@ -448,9 +339,9 @@ function resetSearch(): void {
                     <span class="text-lg">{{ product.name }}</span>
                     <span
                       class="text-xl font-bold"
-                      :class="product.discount ? 'text-green-600' : ''"
+                      :class="product.discountPercent ? 'text-green-600' : ''"
                     >
-                      {{ formatPrice(product.price) }}
+                      {{ formatPrice(finalPrice(product)) }}
                     </span> 
                   </div>
                 </div>
@@ -495,32 +386,32 @@ function resetSearch(): void {
             >
               <p
                 class="text-4xl font-bold"
-                :class="selectedProductData.discount ? 'text-green-600' : ''"
+                :class="selectedProductData.discountPercent ? 'text-green-600' : ''"
               >
-                {{ formatPrice(selectedProductData.price) }}
+                {{ formatPrice(finalPrice(selectedProductData)) }}
               </p>
               <p
-                v-if="selectedProductData.discount"
+                v-if="selectedProductData.discountPercent"
                 class="text-lg font-semibold "
               >
                 <span class="line-through">
-                  {{ formatPrice(selectedProductData.originalPrice) }}</span>
+                  {{ formatPrice(selectedProductData.price) }}</span>
                 <span
                   class="text-xl ml-3 font-semibold text-green-600"
                 >
-                  Aplica descuento {{ selectedProductData.discount }}%
+                  Aplica descuento {{ selectedProductData.discountPercent }}%
                 </span>
               </p>
               <p class="pt-2 text-xl font-bold">
                 {{ selectedProductData.name }}
               </p>
               
-              <p
+              <!-- <p
                 v-if="selectedCategory"
                 class="text-xl text-neutral-500"
               >
                 En {{ selectedCategory.name }}
-              </p>
+              </p> -->
               <div>
                 <UButton
                   label="Guiarme al producto en la gondola"
@@ -560,9 +451,9 @@ function resetSearch(): void {
                   <span class="text-base">{{ related.name }}</span>
                   <span
                     class="text-xs font-bold"
-                    :class="related.discount ? 'text-green-600' : ''"
+                    :class="related.discountPercent ? 'text-green-600' : ''"
                   >
-                    {{ formatPrice(related.price) }}
+                    {{ formatPrice(finalPrice(related)) }}
                   </span> 
                 </div>
               </div>

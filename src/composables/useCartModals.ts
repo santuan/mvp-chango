@@ -2,6 +2,8 @@ import { ref } from 'vue'
 import { useToast } from '@nuxt/ui/composables'
 import { useCart } from './useCart'
 import type { CartProduct } from './useCart'
+import { products as catalog } from '../data/catalog'
+import type { Product } from '../data/catalog'
 
 const scanModalOpen = ref(false)
 const addModalOpen = ref(false)
@@ -15,31 +17,47 @@ const scanMode = ref<'add' | 'remove'>('add')
 const justAddedId = ref<number | null>(null)
 const guidedProduct = ref<CartProduct | null>(null)
 
-const scanCatalog: CartProduct[] = [
-  { id: 1, name: 'Leche entera 1L', unitPrice: 1200, quantity: 0 },
-  { id: 2, name: 'Pan lactal', unitPrice: 2800, quantity: 0 },
-  { id: 3, name: 'Huevos x12', unitPrice: 3500, quantity: 0, discountPercent: 20 },
-  { id: 4, name: 'Aceite de oliva 500ml', unitPrice: 8500, quantity: 0 },
-  { id: 5, name: 'Arroz 1kg', unitPrice: 1600, quantity: 0 },
-  { id: 6, name: 'Fideos 500g', unitPrice: 1400, quantity: 0 },
-  { id: 7, name: 'Azúcar 1kg', unitPrice: 1800, quantity: 0 },
-  { id: 8, name: 'Yerba mate 500g', unitPrice: 4200, quantity: 0, discountPercent: 20 },
-  { id: 9, name: 'Café molido 250g', unitPrice: 7500, quantity: 0 },
-  { id: 10, name: 'Gaseosa 2.25L', unitPrice: 3200, quantity: 0 },
-  { id: 11, name: 'Agua mineral 2L', unitPrice: 1100, quantity: 0 },
-  { id: 12, name: 'Cerveza x6', unitPrice: 5800, quantity: 0, discountPercent: 20 },
-  { id: 13, name: 'Jabón en barra', unitPrice: 900, quantity: 0 },
-  { id: 14, name: 'Papel higiene x4', unitPrice: 4500, quantity: 0 },
-  { id: 15, name: 'Detergente 1L', unitPrice: 3800, quantity: 0 },
-  { id: 16, name: 'Shampoo 400ml', unitPrice: 5200, quantity: 0 },
-  { id: 17, name: 'Manteca 200g', unitPrice: 2400, quantity: 0 },
-  { id: 18, name: 'Queso cremoso 500g', unitPrice: 6800, quantity: 0 },
-  { id: 19, name: 'Bondiola 1kg', unitPrice: 12000, quantity: 0, discountPercent: 20 },
-  { id: 20, name: 'Banana 1kg', unitPrice: 1500, quantity: 0 }
-]
-
-const scanIndex = ref(0)
 const scanRemoveIndex = ref(0)
+
+// Scanning walks a shuffled copy of the catalog instead of going aisle by aisle.
+// A full pass always drains before the next shuffle, so the sequence reads as
+// random and no item repeats within a pass — a plain Math.random() pick would
+// repeat constantly.
+let scanBag: Product[] = []
+let scanBagCursor = 0
+
+function shuffledCatalog(): Product[] {
+  const bag = [...catalog]
+  for (let i = bag.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1))
+    const picked = bag[j]
+    bag[j] = bag[i]
+    bag[i] = picked
+  }
+  return bag
+}
+
+function nextScanProduct(): Product {
+  if (scanBagCursor >= scanBag.length) {
+    scanBag = shuffledCatalog()
+    scanBagCursor = 0
+  }
+  const product = scanBag[scanBagCursor]
+  scanBagCursor += 1
+  return product
+}
+
+// The shared catalog stores the gross list price; the cart works with
+// unitPrice + discountPercent. This is the single conversion point.
+function toCartProduct(product: Product): CartProduct {
+  return {
+    id: product.id,
+    name: product.name,
+    unitPrice: product.price,
+    quantity: 0,
+    discountPercent: product.discountPercent
+  }
+}
 
 export function useCartModals() {
   const { products } = useCart()
@@ -51,9 +69,9 @@ export function useCartModals() {
     scanModalOpen.value = true
   }
 
-  function openGuidedScan(product: CartProduct): void {
+  function openGuidedScan(product: Product): void {
     scanMode.value = 'add'
-    guidedProduct.value = { ...product }
+    guidedProduct.value = toCartProduct(product)
     scanModalOpen.value = true
   }
 
@@ -67,9 +85,8 @@ export function useCartModals() {
       openRemove(item)
       return
     }
-    const item = guidedProduct.value ?? scanCatalog[scanIndex.value % scanCatalog.length]
-    if (!guidedProduct.value)
-      scanIndex.value += 1
+    // `??` short-circuits, so the shuffled bag only advances on a real scan.
+    const item = guidedProduct.value ?? toCartProduct(nextScanProduct())
     selectedProduct.value = { ...item }
     modalQty.value = 1
     addModalOpen.value = true
