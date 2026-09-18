@@ -66,6 +66,13 @@ declare module 'vue-router/auto-routes' {
       Record<never, never>,
       | never
     >,
+    '/promociones': RouteRecordInfo<
+      '/promociones',
+      '/promociones',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
   }
 
   /**
@@ -114,6 +121,14 @@ declare module 'vue-router/auto-routes' {
     'src/pages/pagar.vue': {
       routes:
         | '/pagar'
+      views:
+        | never
+      pathParamNames:
+        | never
+    }
+    'src/pages/promociones.vue': {
+      routes:
+        | '/promociones'
       views:
         | never
       pathParamNames:

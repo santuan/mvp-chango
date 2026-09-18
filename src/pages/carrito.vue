@@ -164,6 +164,17 @@
           icon="i-lucide-search"
           label="Buscar producto"
         />
+        <UButton
+          block
+          to="/promociones"
+          variant="outline"
+          color="neutral"
+          size="xl"
+          active-class="opacity-50!"
+          class="h-18 rounded-2xl font-bold"
+          icon="i-lucide-badge-percent"
+          label="Promociones bancos"
+        />
         <!-- <UButton
           block
           variant="outline"
