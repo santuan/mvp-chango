@@ -643,7 +643,7 @@ function backToModality(): void {
               v-if="splitCartA.length === 0"
               class="p-6 text-center text-sm text-neutral-500"
             >
-              Sin items — pasá algo desde el otro lado
+              Sin items en carrito 1
             </p>
           </div>
           <!-- <div class="flex items-center justify-between bg-neutral-50 px-4 py-3">
@@ -689,7 +689,7 @@ function backToModality(): void {
               v-if="splitCartB.length === 0"
               class="p-6 text-center text-sm text-neutral-500"
             >
-              Sin items — pasá algo desde el otro lado
+              Sin items en carrito 2
             </p>
           </div>
           <!-- <div class="flex items-center justify-between bg-neutral-50 px-4 py-3">
