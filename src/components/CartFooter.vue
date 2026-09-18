@@ -100,7 +100,7 @@ import { useCartModals } from '../composables/useCartModals';
           /> -->
           {{ formatPrice(cartTotal) }}
         </span>
-        <span>Finalizar compra</span>
+        <span class="text-xl">Finalizar compra</span>
       </button>
     </div>
   </footer>

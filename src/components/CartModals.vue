@@ -242,22 +242,22 @@ defineExpose({ openScan, checkoutModalOpen, assistanceModalOpen, openAssistance 
         </h3>
         <ol class=" gap-2 text-lg list-decimal font-semibold">
           <li>Diríjase a la zona de salida para <b>Pago sin fila</b>.</li>
-          <li>Haga click en la opción finalizar compra</li>
+          <li>Haga clic en la opción finalizar compra</li>
         </ol>
-        <div class="flex flex-col gap-9 md:flex-row">
+        <div class="flex flex-col gap-4 md:flex-row">
           <UButton
-            variant="outline"
+            label="Continuar comprando"
+            variant="solid"
             color="neutral"
             size="xl"
-            class="h-18 rounded-2xl font-bold px-6"
-            label="Continuar Comprando"
+            class="h-18 w-64 rounded-2xl font-bold border-4 justify-center"
             @click="checkoutModalOpen = false"
           />
           <UButton
             to="/pagar"
             color="success"
             size="xl"
-            class="h-18 rounded-2xl font-bold px-6"
+            class="h-18 rounded-2xl font-bold w-64 justify-center"
             label="Finalizar compra"
             @click="checkoutModalOpen = false"
           />

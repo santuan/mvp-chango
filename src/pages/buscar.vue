@@ -250,7 +250,7 @@ function resetSearch(): void {
                 size="xl"
                 block
                 active-class="opacity-50!"
-                class="h-32 px-6 rounded-2xl font-bold"
+                class="h-30 px-6 rounded-2xl font-bold"
                 @click="openCategory(category)"
               >
                 <!-- <UIcon
@@ -282,7 +282,7 @@ function resetSearch(): void {
               color="neutral"
               size="xl"
               class="h-18 px-6 rounded-2xl font-bold disabled:opacity-40"
-              label="Pagina anterior"
+              label="Página anterior"
               icon="i-lucide-arrow-left"
               :disabled="page <= 1"
               @click="prevPage"
@@ -293,7 +293,7 @@ function resetSearch(): void {
               color="neutral"
               size="xl"
               class="h-18 px-6 rounded-2xl font-bold disabled:opacity-40"
-              label="Siguiente pagina"
+              label="Siguiente página"
               trailing-icon="i-lucide-arrow-right"
               :disabled="page >= totalPages"
               @click="nextPage"
@@ -310,7 +310,7 @@ function resetSearch(): void {
                 color="neutral"
                 size="xl"
                 active-class="opacity-50!"
-                class="h-18 rounded-2xl px-6 mt-2 font-bold"
+                class="h-18 rounded-2xl px-6 font-bold"
                 icon="i-lucide-arrow-left"
                 label="Volver a categorías"
                 @click="backToCategories"
@@ -421,7 +421,6 @@ function resetSearch(): void {
                 En {{ selectedCategory.name }}
               </p> -->
               <div class="flex flex-wrap gap-3">
-               
                 <UButton
                   label="Ver en mapa"
                   icon="i-lucide-map"
@@ -431,7 +430,7 @@ function resetSearch(): void {
                   class="h-18 px-6 rounded-2xl font-bold"
                   @click="openMap"
                 />
-                 <UButton
+                <UButton
                   label="Guiarme al producto en la gondola"
                   icon="i-lucide-navigation"
                   variant="outline"

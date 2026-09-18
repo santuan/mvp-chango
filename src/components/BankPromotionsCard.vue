@@ -87,29 +87,29 @@ function displayValue(promo: BankPromotion): string {
               <p class=" font-bold text-slate-900">
                 {{ displayName(promo) }}
               </p>
-              <p class="text-[11px] text-slate-500">
+              <p class="text-xs text-slate-500">
                 {{ promo.detail }}
               </p>
               <span
                 v-if="promo.note && promo.noteStyle === 'tag'"
-                class="w-fit rounded-sm bg-emerald-50 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700"
+                class="w-fit  rounded-sm bg-emerald-50 px-1.5 py-0.5 text-xs font-bold text-emerald-700"
               >
                 {{ promo.note }}
               </span>
               <span
                 v-else-if="promo.note"
-                class="text-[10px] text-slate-400"
+                class="text-xs text-slate-400"
               >
                 {{ promo.note }}
               </span>
             </div>
           </div>
           <p
-            class="shrink-0 pl-2 text-right  font-bold"
+            class="shrink-0  grid gap-1 pl-2 text-right  "
             :class="promo.valueClass ?? 'text-emerald-700'"
           >
-            {{ displayValue(promo) }} <br>
-            <span class="text-xs text-black">Total con descuento</span>
+            <span class="font-bold text-sm">{{ displayValue(promo) }}</span>
+            <span class="text-xs">Total con descuento</span>
           </p>
         </div>
       </div>

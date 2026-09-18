@@ -7,8 +7,11 @@ import type { CartProduct } from '../composables/useCart'
 import BankPromotionsCard from '../components/BankPromotionsCard.vue'
 import TicketWhatsapp from '../components/TicketWhatsapp.vue'
 
-const { products, subtotal, saving, cartTotal, clearCart } = useCart()
+const { products, subtotal, saving, cartTotal, clearCart, totalItems } = useCart()
 const router = useRouter()
+
+// Split needs at least 2 units (one per person). A single unit can't be divided.
+const canUseSplit = computed(() => totalItems.value >= 2)
 
 const allCategories = [
   { id: 1, name: 'Lácteos' },
@@ -134,6 +137,7 @@ const step = ref<PayStep>('modality')
 const splitCount = ref<2 | 3 | 4 | null>(null)
 const splitCartA = ref<CartProduct[]>([])
 const splitCartB = ref<CartProduct[]>([])
+const isEqualSplit = ref(false)
 const currentQr = ref(1)
 const paidCount = ref(0)
 const errorTitle = ref('No se registro el pago')
@@ -168,6 +172,7 @@ function initSplitCarts(): void {
   splitCartA.value = products.value.map(p => ({ ...p }))
   splitCartB.value = []
   splitCount.value = 2
+  isEqualSplit.value = false
 }
 
 function moveUnit(productId: number, from: 'A' | 'B'): void {
@@ -217,9 +222,10 @@ function snapshotReceipt(isSingle: boolean): void {
     return
   }
   // Item-based split for 2 people: each side pays its own cart total.
+  // Equal split ignores the item assignment and charges total / 2 each.
   const totalA = splitTotalA.value
   const totalB = splitTotalB.value
-  const hasAssignment = splitCartA.value.length > 0 || splitCartB.value.length > 0
+  const hasAssignment = !isEqualSplit.value && (splitCartA.value.length > 0 || splitCartB.value.length > 0)
   receiptTotal.value = total
   receiptParts.value = 2
   if (hasAssignment && totalA + totalB > 0) {
@@ -277,6 +283,8 @@ onBeforeUnmount(stopRestartCountdown)
 
 const currentAmount = computed(() => {
   if ((step.value === 'qr-split' || step.value === 'generating' || step.value === 'verifying' || step.value === 'error') && splitCount.value) {
+    if (isEqualSplit.value)
+      return splitAmount(2)
     // Item-based split: each QR charges its own cart. Fallback to equal split
     // when there is no assignment (e.g. legacy state).
     if (splitAmounts.value.length === 2 && (splitCartA.value.length > 0 || splitCartB.value.length > 0))
@@ -304,6 +312,8 @@ function goSingleQr(): void {
 }
 
 function goSplitSelect(): void {
+  if (!canUseSplit.value)
+    return
   initSplitCarts()
   step.value = 'split'
 }
@@ -311,6 +321,16 @@ function goSplitSelect(): void {
 function startSplit(): void {
   if (!canStartSplit.value)
     return
+  isEqualSplit.value = false
+  splitCount.value = 2
+  previousQrStep.value = 'qr-split'
+  currentQr.value = 1
+  paidCount.value = 0
+  step.value = 'qr-split'
+}
+
+function startEqualSplit(): void {
+  isEqualSplit.value = true
   splitCount.value = 2
   previousQrStep.value = 'qr-split'
   currentQr.value = 1
@@ -351,7 +371,7 @@ function simulateQrPaid(): void {
 }
 
 function simulateQrError(single: boolean): void {
-  errorTitle.value = single ? 'No se registro el pago' : `QR ${currentQr.value} NO SE REGISTRO`
+  errorTitle.value = single ? 'No se registro el pago' : `No se registro el pago  ${currentQr.value}`
   step.value = 'verifying'
   window.setTimeout(() => {
     step.value = 'error'
@@ -473,7 +493,7 @@ function backToModality(): void {
               size="xl"
               block
               class="h-18 px-6 rounded-2xl font-bold w-64"
-              label="Volver atras"
+              label="Volver"
             />
             <UButton
               color="success"
@@ -492,25 +512,27 @@ function backToModality(): void {
     <!-- Modality -->
     <section
       v-if="step === 'modality'"
-      class="flex w-full max-w-5xl flex-1 flex-col justify-center gap-10"
+      class="flex w-full max-w-6xl flex-1 flex-col justify-center gap-10"
     >
       <h1 class="text-center text-3xl font-bold">
         Seleccionar como desea pagar
       </h1>
 
-      <div class="grid items-start gap-8 md:grid-cols-[minmax(0,480px)_1fr]">
+      <div class="grid items-start gap-8 md:grid-cols-2">
         <!-- Left: bank promotions of the day -->
         <BankPromotionsCard />
 
         <!-- Right: compact modality actions -->
-        <div class="flex w-full max-w-xl flex-col gap-4 justify-self-end">
+        <div class="flex w-full flex-col gap-4 justify-self-end">
           <p class="text-xl font-bold">
             Total a pagar
           </p>
           <p class="text-7xl font-bold text-green-600">
             {{ formatPrice(cartTotal) }}
           </p>
-          <p>Los descuentos se aplicarán luego del pago por su entidad bancaria</p>
+          <p class="text-sm">
+            Los descuentos serán aplicados por su entidad bancaria luego de realizar el pago.
+          </p>
           <UButton
             variant="outline"
             color="neutral"
@@ -526,7 +548,8 @@ function backToModality(): void {
             color="neutral"
             size="xl"
             block
-            class="h-20 w-full flex-col rounded-2xl font-bold border-4"
+            class="h-20 w-full flex-col rounded-2xl font-bold border-4 disabled:opacity-50 disabled:pointer-events-none"
+            :disabled="!canUseSplit"
             @click="goSplitSelect"
           >
             <span class="text-xl">Pago dividido (2 personas)</span>
@@ -539,7 +562,7 @@ function backToModality(): void {
         size="xl"
         block
         class="h-18 w-64 rounded-2xl font-bold"
-        label="Volver atras"
+        label="Volver"
         to="/carrito"
       />
     </section>
@@ -550,23 +573,43 @@ function backToModality(): void {
       class="flex w-full max-w-6xl flex-1 flex-col justify-center gap-2"
     >
       <h1 class="text-center text-lg font-bold">
-        Pago dividido · 2 personas
+        Pago dividido · 2 personas · Total {{ formatPrice(cartTotal) }}
       </h1>
       <h2 class="mx-auto mt-2 max-w-2xl text-center text-2xl font-bold">
-        Pasá items de un lado al otro y después comenzá a pagar.
+        Pagar en partes iguales o pasá items de un lado al otro.
       </h2>
       <p
         
         class="text-center text-sm font-semibold text-red-600 h-9"
       >
-        <span v-if="!canStartSplit">Cada persona tiene que tener al menos un item.</span>
+        <span v-if="!canStartSplit">Cada pago tiene que tener al menos un item en su carrito.</span>
       </p>
+      <div class="flex justify-center items-center w-full mb-3 gap-6">
+        <UButton
+          variant="outline"
+          color="neutral"
+          size="md"
+          class="rounded-xl font-bold"
+          label="← Pasar todo"
+          :disabled="splitCartB.length === 0"
+          @click="moveAll('B')"
+        />
+        <UButton
+          variant="outline"
+          color="neutral"
+          size="md"
+          class="rounded-xl font-bold"
+          label="Pasar todo →"
+          :disabled="splitCartA.length === 0"
+          @click="moveAll('A')"
+        />
+      </div>
       <div class="grid items-start gap-4 md:grid-cols-2">
         <!-- Cart A -->
         <div class="overflow-hidden rounded-2xl border border-neutral-200 bg-white text-left">
           <div class="flex items-center justify-between border-b border-neutral-200 px-4 py-3">
             <p class="text-lg font-bold">
-              Persona 1 ({{ splitCartA.length }})
+              Pago 1 ({{ splitCartA.length }} items)
             </p>
             <p class="text-lg font-bold text-green-600">
               {{ formatPrice(splitTotalA) }}
@@ -591,7 +634,8 @@ function backToModality(): void {
                 variant="outline"
                 size="md"
                 class="shrink-0 rounded-xl font-bold"
-                label="Pasar →"
+                label="Pasar"
+                trailing-icon="i-lucide-arrow-right"
                 @click="moveUnit(product.id, 'A')"
               />
             </div>
@@ -611,7 +655,7 @@ function backToModality(): void {
         <div class="overflow-hidden rounded-2xl border border-neutral-200 bg-white text-left">
           <div class="flex items-center justify-between border-b border-neutral-200 px-4 py-3">
             <p class="text-lg font-bold">
-              Persona 2 ({{ splitCartB.length }})
+              Pago 2 ({{ splitCartB.length }} items)
             </p>
             <p class="text-lg font-bold text-green-600">
               {{ formatPrice(splitTotalB) }}
@@ -628,7 +672,8 @@ function backToModality(): void {
                 variant="outline"
                 size="md"
                 class="shrink-0 rounded-xl font-bold"
-                label="← Pasar"
+                label="Pasar"
+                icon="i-lucide-arrow-left"
                 @click="moveUnit(product.id, 'B')"
               />
               <div class="min-w-0 flex-1 text-right">
@@ -653,28 +698,7 @@ function backToModality(): void {
           </div> -->
         </div>
       </div>
-      <div class="flex flex-col items-center justify-between gap-2 sm:flex-row">
-        <div class="flex justify-center items-center w-full gap-6">
-          <UButton
-            variant="outline"
-            color="neutral"
-            size="md"
-            class="rounded-xl font-bold"
-            label="← Pasar todo"
-            :disabled="splitCartB.length === 0"
-            @click="moveAll('B')"
-          />
-           <UButton
-            variant="outline"
-            color="neutral"
-            size="md"
-            class="rounded-xl font-bold"
-            label="Pasar todo →"
-            :disabled="splitCartA.length === 0"
-            @click="moveAll('A')"
-          />
-        </div>
-      </div>
+      
       
       <div class="mt-2 flex flex-col gap-4 sm:flex-row sm:justify-between items-center">
         <UButton
@@ -683,19 +707,24 @@ function backToModality(): void {
           size="xl"
           block
           class="h-18 w-64 px-6 rounded-2xl font-bold"
-          label="Volver atras"
+          label="Volver"
           @click="backToModality"
         />
-        <p class="text-2xl font-semibold text-emerald-600">
-          Total a pagar: {{ formatPrice(cartTotal) }}
-          <!-- · Persona 1: {{ formatPrice(splitTotalA) }} · Persona 2: {{ formatPrice(splitTotalB) }} -->
-        </p>
+        
+        <UButton
+          color="success"
+          size="xl"
+          block
+          class="h-18 w-64 px-6 rounded-2xl font-bold"
+          label="Pagar en partes iguales"
+          @click="startEqualSplit"
+        />
         <UButton
           :color="canStartSplit ? 'success' : 'neutral'"
           size="xl"
           block
-          class="h-18 w-64 px-6 rounded-2xl font-bold"
-          label="Comenzar a pagar"
+          class="h-18 w-64 px-6 rounded-2xl font-bold disabled:opacity-50 disabled:pointer-events-none"
+          label="Comenzar pago dividido"
           :disabled="!canStartSplit"
           @click="startSplit"
         />
@@ -707,35 +736,45 @@ function backToModality(): void {
       v-if="step === 'qr-single' || step === 'qr-split'"
       class="flex w-full max-w-2xl flex-1 flex-col items-center justify-center gap-4 text-center"
     >
-      <p class="text-3xl">
-        {{ step === 'qr-split' ? `Persona ${currentQr} va a pagar ${formatPrice(currentAmount)}` : `Vas a pagar ${formatPrice(currentAmount)}` }}
-      </p>
       <p
+        v-if="step === 'qr-split' && splitCount"
+        class="text-base font-semibold text-neutral-600"
+      >
+        Pago {{ currentQr }} de {{ splitCount }}
+      </p>
+      <p class="text-5xl font-bold">
+        {{ step === 'qr-split' ? `Pago ${currentQr} - ${formatPrice(currentAmount)}` : `${formatPrice(currentAmount)}` }}
+      </p>
+      <!-- <p
         v-if="step === 'qr-split'"
         class="text-sm font-semibold text-neutral-600"
       >
-        Persona 1: {{ formatPrice(splitTotalA) }} · Persona 2: {{ formatPrice(splitTotalB) }}
-      </p>
-      <!-- <h1 class="text-3xl font-bold">
-        {{ qrLabel }}
-      </h1> -->
-      <div
-        v-if="step === 'qr-split' && splitCount"
-        class="flex gap-2"
-      >
-        <span
-          v-for="i in splitCount"
-          :key="i"
-          class="h-3 w-10"
-          :class="i < currentQr || (i === currentQr && paidCount >= i) ? 'bg-green-600' : i === currentQr ? 'bg-black' : 'bg-neutral-400'"
-        />
-      </div>
+        <span v-if="isEqualSplit">Persona 1: {{ formatPrice(splitAmount(2)) }} · Persona 2: {{ formatPrice(splitAmount(2)) }} (partes iguales)</span>
+        <span v-else>Persona 1: {{ formatPrice(splitTotalA) }} · Persona 2: {{ formatPrice(splitTotalB) }}</span>
+      </p> -->
+      <h1 class="text-lg font-medium text-gray-700">
+        Escanear QR o acercar al manubrio
+      </h1>
       
-      <div class="flex flex-col h-80 w-80 items-center justify-center bg-neutral-100">
+      
+      <div class="flex flex-col p-6 gap-6 items-center justify-center rounded-2xl  bg-white">
         <UIcon
           name="i-lucide-qr-code"
-          class="size-44 text-neutral-500"
+          class="size-56 text-neutral-500"
         />
+        <div class="flex w-full items-center gap-3 justify-between border border-neutral-200 px-5 py-4 text-left">
+          <UIcon
+            name="i-lucide-nfc"
+            class="size-7 shrink-0 text-neutral-700"
+          />
+          <p class="text-sm font-semibold text-neutral-800">
+            O apoyá tu tarjeta en el lector físico
+          </p>
+          <UIcon
+            name="i-lucide-arrow-down"
+            class="size-7 shrink-0 text-neutral-700"
+          />
+        </div>
         <div class="grid grid-cols-2 gap-1">
           <UButton
             color="success"
@@ -755,15 +794,7 @@ function backToModality(): void {
         Mock: acercá el lector o simulá el resultado
       </p> -->
       <!-- The terminal takes QR and contactless, so both instructions stay visible. -->
-      <div class="flex w-full items-center gap-3 max-w-md rounded-2xl border border-neutral-300 bg-white px-5 py-4 text-left">
-        <UIcon
-          name="i-lucide-nfc"
-          class="size-8 shrink-0 text-neutral-700"
-        />
-        <p class="text-base font-semibold text-neutral-800">
-          Acercá tu tarjeta de débito/crédito o tu celular para pagar por NFC
-        </p>
-      </div>
+      
 
       <UButton
         v-if="step === 'qr-single' || (step === 'qr-split' && paidCount === 0 && currentQr === 1)"
@@ -780,7 +811,7 @@ function backToModality(): void {
       <!-- <UButton
         color="neutral"
         variant="ghost"
-        label="Volver atras"
+        label="Volver"
         @click="step === 'qr-single' ? backToModality() : goSplitSelect()"
       /> -->
     </section>
@@ -798,7 +829,7 @@ function backToModality(): void {
         v-if="previousQrStep === 'qr-split' && splitCount"
         class="text-2xl font-bold"
       >
-        QR {{ paidCount }} de {{ splitCount }} Pagado
+        Pago {{ paidCount }} de {{ splitCount }} realizado
       </h1>
       <h1
         v-else
@@ -814,7 +845,7 @@ function backToModality(): void {
           name="i-lucide-loader-2"
           class="size-5 animate-spin"
         />
-        Generando QR {{ paidCount + 1 }}...
+        Generando pago {{ paidCount + 1 }}...
       </p>
     </section>
 
@@ -872,10 +903,10 @@ function backToModality(): void {
           size="xl"
           block
           class="h-18 px-6 rounded-2xl font-bold w-64"
-          label="Generar nuevo QR"
+          label="Generar nuevo pago"
           @click="retryQr"
         />
-        <UButton
+        <!-- <UButton
           v-if="previousQrStep === 'qr-split' && paidCount === 0 && currentQr === 1"
           variant="outline"
           color="neutral"
@@ -884,7 +915,7 @@ function backToModality(): void {
           class="h-18 px-6 rounded-2xl font-bold w-64"
           label="Cancelar"
           @click="goSplitSelect"
-        />
+        /> -->
       </div>
     </section>
 
@@ -917,7 +948,7 @@ function backToModality(): void {
       <div class="flex items-center gap-4 rounded-2xl border border-neutral-300 bg-white px-6 py-4">
         <span class="text-4xl font-bold tabular-nums">{{ restartSeconds }}</span>
         <p class="max-w-56 text-left text-sm font-semibold text-neutral-700">
-          El chango se va a reiniciar automáticamente
+          El ChanGo! se va a reiniciar automáticamente
         </p>
         <UButton
           class="bg-black px-8 font-bold text-white"

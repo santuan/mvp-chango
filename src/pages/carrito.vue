@@ -47,10 +47,10 @@
             name="i-lucide-shopping-cart"
             class="size-16 text-neutral-300"
           />
-          <p class="text-xl font-bold">
+          <p class="text-3xl font-bold">
             El carrito está vacío
           </p>
-          <p class="text-sm text-neutral-500">
+          <p class="text-lg text-neutral-500">
             Escaneá un producto para comenzar
           </p>
           <UButton
@@ -67,7 +67,7 @@
           <div
             v-for="product in products"
             :key="product.id"
-            class="flex items-center gap-4 border-t border-neutral-200 py-4 transition-all duration-300 p-2"
+            class="flex items-center gap-4 border-t border-neutral-200 py-2 transition-all duration-300 p-2"
             :class="justAddedId === product.id ? 'ring-4 ring-green-500 ring-inset rounded-lg' : ''"
           >
             <div class="flex h-24 w-24 shrink-0 items-center justify-center bg-neutral-200">
@@ -77,12 +77,12 @@
               />
             </div>
             <div class="flex-1">
-              <p class="text-lg font-bold">
+              <p class="text-xl font-bold">
                 {{ product.name }}
               </p>
               <p
                 v-if="product.discountPercent"
-                class="text-sm font-semibold text-green-600"
+                class="text-base font-semibold text-green-600"
               >
                 Aplica descuento {{ product.discountPercent }}%
               </p>

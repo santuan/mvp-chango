@@ -49,8 +49,8 @@ function hasTag(product: Product, tag: ProductTag): boolean {
 export const categories: Category[] = [
   // Derived views, shown first. Their ids continue the aisle ids (1..15)
   // so every product keeps its real `categoryId` untouched.
-  { id: 16, name: 'Sin TACC', match: product => hasTag(product, 'sin-tacc') },
   { id: 17, name: 'Con descuentos', match: product => Boolean(product.discountPercent) },
+  { id: 16, name: 'Sin TACC', match: product => hasTag(product, 'sin-tacc') },
   { id: 18, name: 'Veganos', match: product => hasTag(product, 'vegano') },
   // Aisles
   aisle(1, 'Lácteos'),
